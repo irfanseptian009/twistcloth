@@ -3,13 +3,13 @@ import { useNavigate } from "react-router";
 import { auth } from "../config/firebase";
 import { signOut } from "firebase/auth";
 
-export default function SellerPage() {
+export default function HomeSeller() {
   const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
       await signOut(auth);
-      navigate("/signin"); // Redirect ke halaman login
+      navigate("/signin"); 
     } catch (error) {
       console.error("Error saat logout:", error);
     }

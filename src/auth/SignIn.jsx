@@ -26,14 +26,14 @@ export default function SignIn() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/seller"); // Redirect ke halaman yang dilindungi
+      navigate("/home"); // Redirect ke halaman yang dilindungi
     } catch (error) {
-      setErrorMessage(error.message);
+      setErrorMessage("Email atau password salah.");
+      console.error(error);
     } finally {
       setLoading(false);
     }
   };
-
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
@@ -44,13 +44,11 @@ export default function SignIn() {
       }}
     >
       <CiShop className="bg-slate-50 h-32 w-32 rounded-full absolute mb-96 p-4 shadow-xl" />
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-xl mt-2">
+      <div className="max-w-md w-full h-96 space-y-8 p-8  bg-white rounded-2xl shadow-xl mt-16">
         <h2 className="text-center text-3xl font-extrabold text-gray-900">
           Masuk sebagai seller
         </h2>
-        {errorMessage && (
-          <p className="text-red-500 text-sm text-center">{errorMessage}</p>
-        )}
+      
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div>
@@ -88,7 +86,9 @@ export default function SignIn() {
             } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
           >
             {loading ? "Loading..." : "Masuk"}
-          </button>
+          </button>  {errorMessage && (
+          <p className="text-red-500 text-sm text-center">{errorMessage}</p>
+        )}
           <div className="text-sm text-center">
             Belum punya akun?{" "}
             <Link
