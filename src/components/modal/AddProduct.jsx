@@ -1,10 +1,13 @@
+// src/components/AddProduct.jsx
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { addItem, updateItem } from '../../store/features/items/Action';
+import PropTypes from 'prop-types';
 
 const AddProduct = ({ onClose, currentItem }) => {
   const dispatch = useDispatch();
   const [form, setForm] = useState({
+    image: null, 
     name: '',
     price: '',
     stock: '',
@@ -15,6 +18,7 @@ const AddProduct = ({ onClose, currentItem }) => {
   useEffect(() => {
     if (currentItem) {
       setForm({
+        image: currentItem.image || null,
         name: currentItem.name || '',
         price: currentItem.price || '',
         stock: currentItem.stock || '',
@@ -23,6 +27,7 @@ const AddProduct = ({ onClose, currentItem }) => {
       });
     } else {
       setForm({
+        image: null,
         name: '',
         price: '',
         stock: '',
@@ -33,8 +38,14 @@ const AddProduct = ({ onClose, currentItem }) => {
   }, [currentItem]);
 
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((prevForm) => ({ ...prevForm, [name]: value }));
+    const { name, type, value, files } = e.target;
+    if (type === 'file') {
+      const file = files[0];
+      console.log("Selected file:", file);
+      setForm((prevForm) => ({ ...prevForm, [name]: file }));
+    } else {
+      setForm((prevForm) => ({ ...prevForm, [name]: value }));
+    }
   };
 
   const handleSubmit = async (e) => {
@@ -123,6 +134,20 @@ const AddProduct = ({ onClose, currentItem }) => {
                 required
               />
             </label>
+            <label className="block mb-2">
+              <span className="text-gray-700">Image</span>
+              <input
+                type="file"
+                name="image"
+                onChange={handleChange}
+                accept="image/*"
+                className="mt-1 border-2 block w-full"
+                required={!currentItem}
+              />
+              {currentItem && typeof form.image === 'string' && (
+                <img src={form.image} alt={form.name} width="100" className="mt-2" />
+              )}
+            </label>
           </div>
 
           {/* Tombol Submit dan Update */}
@@ -147,6 +172,19 @@ const AddProduct = ({ onClose, currentItem }) => {
       </div>
     </div>
   );
+};
+
+AddProduct.propTypes = {
+  onClose: PropTypes.func.isRequired,
+  currentItem: PropTypes.shape({
+    id: PropTypes.string,
+    name: PropTypes.string,
+    image: PropTypes.string,
+    price: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    stock: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    categoryId: PropTypes.string,
+    description: PropTypes.string,
+  }),
 };
 
 export default AddProduct;

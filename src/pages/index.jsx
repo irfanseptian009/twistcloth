@@ -1,5 +1,5 @@
 
-import  DetailProduct  from "./DetailProduct";
+import  DetailProduct  from "./costumer/ProductDetail";
 import HomeSeller from "./HomeSeller";
 import ListProduct from './ListProduct';
 

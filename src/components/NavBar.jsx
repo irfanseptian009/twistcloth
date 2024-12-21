@@ -5,8 +5,8 @@ import { Navigate } from 'react-router'
 import { signOut } from 'firebase/auth'
 
 const navigation = [
-  { name: 'Dashboard', href: '/home', current: true },
-  { name: 'Products', href: '/home/products', current: false },
+  { name: 'Dashboard', href: '/seller', current: true },
+  { name: 'Products', href: '/seller/products', current: false },
   { name: 'Projects', href: '#', current: false },
   { name: 'Calendar', href: '#', current: false },
 ]

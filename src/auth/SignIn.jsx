@@ -4,6 +4,7 @@ import { signInWithEmailAndPassword } from "firebase/auth";
 import { Link, useNavigate } from "react-router";
 import { CiShop } from "react-icons/ci";
 import bg from "../assets/authbg.jpg";
+import { Box, LinearProgress } from '@mui/material';
 
 export default function SignIn() {
   const [email, setEmail] = useState("");
@@ -26,7 +27,7 @@ export default function SignIn() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      navigate("/home"); // Redirect ke halaman yang dilindungi
+      navigate("/home");
     } catch (error) {
       setErrorMessage("Email atau password salah.");
       console.error(error);
@@ -85,7 +86,9 @@ export default function SignIn() {
               loading ? "bg-blue-300" : "bg-slate-800 hover:bg-blue-900"
             } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
           >
-            {loading ? "Loading..." : "Masuk"}
+            {loading ?   <Box sx={{ width: '100%' }}>
+      <LinearProgress />
+    </Box> : "Masuk"}
           </button>  {errorMessage && (
           <p className="text-red-500 text-sm text-center">{errorMessage}</p>
         )}
