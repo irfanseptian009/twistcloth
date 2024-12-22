@@ -7,6 +7,7 @@ import ProtectedRoute from "./ProtectedRoute";
 import { MainLayout } from "../layout";
 import { MainLayoutCostumer } from "../layout/costumer";
 import { HomeCostumer, ProductDetail } from "../pages/costumer";
+import PrivateRoute from "./privateRoute";
 
 const routes = createBrowserRouter([
   { path: "/", element: <SignIn /> },
@@ -28,7 +29,7 @@ const routes = createBrowserRouter([
   // part untuk costumer
   {
     path: "/home",
-    element:  <ProtectedRoute><MainLayoutCostumer /> </ProtectedRoute>,
+    element: <PrivateRoute><MainLayoutCostumer /></PrivateRoute> ,
     children: [
 
       { path: "", element: <HomeCostumer /> },

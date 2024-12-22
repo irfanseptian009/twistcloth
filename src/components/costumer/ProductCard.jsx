@@ -1,15 +1,17 @@
-
 import { FaStar } from "react-icons/fa";
 import { CardContent, Typography } from "@mui/material";
 import { FaCartArrowDown } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router";
 import { useEffect } from "react";
-import { fetchItems } from "../../store/features/items/Action";
-// import { addToCart } from "../../store/costumerCart/cartSlice";
+import { fetchItems } from "../../store/features/items/ProductSlice";
+import { addToCart } from "../../store/features/cart/CartSlice";
+import { useAuth } from "../../hooks/useAuth";
 
 const ProductCard = () => {
   const { items, status, error } = useSelector((state) => state.items);
+  const { user } = useAuth();
+  const userId = user?.uid;
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
@@ -19,9 +21,22 @@ const ProductCard = () => {
     }
   }, [dispatch, items.length]);
 
-  // const handleAddToCart = (id, stock) => {
-  //   // dispatch(addToCart(id, stock));
-  // };
+  const handleAddToCart = (item) => {
+    if (!userId) {
+      alert("Silakan login untuk menambahkan ke keranjang.");
+      return;
+    }
+
+    const cartItem = {
+      productId: item.id,
+      name: item.name,
+      price: item.price,
+      quantity: 1,
+      image: item.image,
+    };
+
+    dispatch(addToCart({ userId, item: cartItem }));
+  };
 
   const handleCardClick = (id) => {
     navigate(`/home/detail/${id}`);
@@ -72,7 +87,7 @@ const ProductCard = () => {
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  // handleAddToCart(item.id, item.stock);
+                  handleAddToCart(item);
                 }}
                 disabled={item.stock <= 0}
               >

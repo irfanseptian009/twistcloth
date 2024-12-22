@@ -4,7 +4,7 @@ import Modal from '../components/modal/Modal';
 import { IoIosAddCircleOutline } from "react-icons/io";
 import AddProduct from "../components/modal/addProduct";
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchItems } from '../store/features/items/Action';
+import { fetchItems } from '../store/features/items/ProductSlice';
 
 const ListProduct = () => {
   const dispatch = useDispatch();

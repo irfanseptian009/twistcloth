@@ -1,7 +1,7 @@
 // src/components/AddProduct.jsx
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { addItem, updateItem } from '../../store/features/items/Action';
+import { addItem, updateItem } from '../../store/features/items/ProductSlice';
 import PropTypes from 'prop-types';
 
 const AddProduct = ({ onClose, currentItem }) => {

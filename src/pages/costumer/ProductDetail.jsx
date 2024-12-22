@@ -5,7 +5,7 @@ import { Box, Typography, CircularProgress, Rating } from "@mui/material";
 import { FaHeart, FaShareAlt } from "react-icons/fa";
 import { FiRefreshCcw } from "react-icons/fi";
 import { IoChevronBackCircleOutline } from "react-icons/io5";
-import { fetchItems } from "../../store/features/items/Action.js"; // Redux Thunk
+import { fetchItems } from "../../store/features/items/ProductSlice";
 import bg from "../../assets/authbg.jpg";
 
 function ProductDetail() {

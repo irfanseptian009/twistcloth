@@ -1,5 +1,3 @@
-// src/components/customer/CartProduct.jsx
-
 import { useEffect, useState } from "react";
 import {
   Dialog,
@@ -10,43 +8,44 @@ import {
 import { XMarkIcon } from "@heroicons/react/24/outline";
 import { IoMdRemoveCircle } from "react-icons/io";
 import { CgAddR } from "react-icons/cg";
-import { useDispatch, useSelector } from "react-redux";
-import { fetchCart, removeFromCart, updateCartQuantity } from "../../store/costumerCart/cartSlice";
 import { useNavigate } from "react-router";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCart, removeFromCart, updateCartItem } from "../../store/features/cart/CartSlice";
+import { useAuth } from "../../hooks/useAuth"; 
+import { Typography } from "@mui/material";
 
 export default function CartProduct() {
   const [open, setOpen] = useState(true);
-  const carts = useSelector((state) => state.cart?.items); // Gunakan optional chaining
-  const status = useSelector((state) => state.cart?.status);
-  const error = useSelector((state) => state.cart?.error);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  console.log("ini cart>>>", carts);
+  const { user } = useAuth(); // Asumsi Anda memiliki hook auth untuk mendapatkan user
+  const userId = user?.uid; // Dapatkan userId dari user
+
+  const { carts, status, error } = useSelector((state) => state.cart);
 
   useEffect(() => {
-    dispatch(fetchCart());
-  }, [dispatch]);
+    if (userId) {
+      dispatch(fetchCart(userId));
+    }
+  }, [dispatch, userId]);
 
   const handleQuantityChange = (cartId, newQuantity) => {
-    dispatch(updateCartQuantity({ cartId, newQuantity }));
+    if (newQuantity < 1) return;
+    dispatch(updateCartItem({ userId, itemId: cartId, quantity: newQuantity }));
   };
 
   const handleRemoveItem = (cartId) => {
-    dispatch(removeFromCart(cartId));
+    dispatch(removeFromCart({ userId, itemId: cartId }));
   };
 
-  // Tambahkan default value jika carts undefined
-  const totalPrice = Array.isArray(carts)
-    ? carts.reduce((sum, cart) => sum + cart.quantity * cart.price, 0)
-    : 0;
+  const totalPrice = carts.reduce((sum, cart) => sum + cart.quantity * cart.price, 0);
 
-  // Tambahkan penanganan loading dan error
-  if (status === 'loading') {
-    return <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">Loading...</div>;
+  if (status === "loading") {
+    return <Typography>Loading cart...</Typography>;
   }
 
-  if (status === 'failed') {
-    return <div className="fixed inset-0 flex items-center justify-center bg-gray-500 bg-opacity-75">Error: {error}</div>;
+  if (status === "failed") {
+    return <Typography>Error: {error}</Typography>;
   }
 
   return (
@@ -77,12 +76,12 @@ export default function CartProduct() {
                   <div className="mt-8">
                     <div className="flow-root">
                       <ul role="list" className="-my-6 divide-y divide-gray-200">
-                        {Array.isArray(carts) && carts.length > 0 ? (
+                        {carts.length > 0 ? (
                           carts.map((cart) => (
                             <li key={cart.id} className="flex py-6">
                               <div className="h-24 w-24 flex-shrink-0 overflow-hidden rounded-md border border-gray-200">
                                 <img
-                                  src={cart.imgUrl}
+                                  src={cart.image}
                                   alt={cart.name}
                                   className="h-full w-full object-cover object-center"
                                 />
@@ -92,7 +91,7 @@ export default function CartProduct() {
                                 <div>
                                   <div className="flex justify-between text-base font-medium text-gray-900">
                                     <h3>{cart.name}</h3>
-                                    <p className="ml-4">Rp.{cart.price}</p>
+                                    <p className="ml-4">Rp.{cart.price.toLocaleString()}</p>
                                   </div>
                                 </div>
                                 <div className="flex flex-1 items-end justify-between text-sm">
@@ -141,7 +140,7 @@ export default function CartProduct() {
                 <div className="border-t border-gray-200 px-4 py-6 sm:px-6">
                   <div className="flex justify-between text-base font-medium text-gray-900">
                     <p>Subtotal</p>
-                    <p>Rp.{totalPrice}</p>
+                    <p>Rp.{totalPrice.toLocaleString()}</p>
                   </div>
                   <div className="mt-6 flex justify-between">
                     <button className="flex items-center justify-center rounded-md border border-transparent bg-black px-6 py-3 text-base font-medium text-white shadow-sm hover:bg-gray-700">

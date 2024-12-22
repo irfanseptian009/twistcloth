@@ -5,7 +5,7 @@ import "slick-carousel/slick/slick-theme.css";
 import BestSellerCard from "../../components/costumer/BestSellerCard";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
-import { fetchItems } from "../../store/features/items/Action";
+import { fetchItems } from "../../store/features/items/ProductSlice";
 
 const Shop = () => {
 

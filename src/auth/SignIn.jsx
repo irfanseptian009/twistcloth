@@ -1,40 +1,40 @@
-import  { useState } from "react";
-import { auth } from "../config/firebase";
-import { signInWithEmailAndPassword } from "firebase/auth";
+import { useState, useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { login } from "../store/auth/authSlice";
 import { Link, useNavigate } from "react-router";
 import { CiShop } from "react-icons/ci";
 import bg from "../assets/authbg.jpg";
 import { Box, LinearProgress } from '@mui/material';
 
 export default function SignIn() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [errorMessage, setErrorMessage] = useState("");
-  const [loading, setLoading] = useState(false);
-
+  const dispatch = useDispatch();
   const navigate = useNavigate();
 
-  const handleSubmit = async (e) => {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  
+  const { user, status, error } = useSelector((state) => state.auth);
+
+  
+
+  useEffect(() => {
+    if (user) {
+      navigate("/home");
+    }
+  }, [user, navigate]);
+
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setErrorMessage("");
 
     // Validasi input
     if (!email || !password) {
-      setErrorMessage("Harap isi semua field.");
+      alert("Harap isi semua field.");
       return;
     }
 
-    setLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, email, password);
-      navigate("/home");
-    } catch (error) {
-      setErrorMessage("Email atau password salah.");
-      console.error(error);
-    } finally {
-      setLoading(false);
-    }
+    dispatch(login({ email, password }));
   };
+
   return (
     <div
       className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8"
@@ -81,17 +81,21 @@ export default function SignIn() {
           </div>
           <button
             type="submit"
-            disabled={loading}
+            disabled={status === 'loading'}
             className={`group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white ${
-              loading ? "bg-blue-300" : "bg-slate-800 hover:bg-blue-900"
+              status === 'loading' ? "bg-blue-300" : "bg-slate-800 hover:bg-blue-900"
             } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500`}
           >
-            {loading ?   <Box sx={{ width: '100%' }}>
-      <LinearProgress />
-    </Box> : "Masuk"}
-          </button>  {errorMessage && (
-          <p className="text-red-500 text-sm text-center">{errorMessage}</p>
-        )}
+            {status === "loading" ? 
+              <Box sx={{ width: '100%' }}>
+                <LinearProgress />
+              </Box> 
+              : "Masuk"
+            }
+          </button>  
+          {error && (
+            <p className="text-red-500 text-sm text-center">{error}</p>
+          )}
           <div className="text-sm text-center">
             Belum punya akun?{" "}
             <Link

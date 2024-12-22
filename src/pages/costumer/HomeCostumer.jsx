@@ -2,7 +2,7 @@
 import { FaSortAmountUp, FaCalendarAlt } from "react-icons/fa";
 import { useDispatch } from "react-redux";
 import { useEffect } from "react";
-import { fetchItems } from "../../store/features/items/Action";
+import { fetchItems } from "../../store/features/items/ProductSlice";
 import { Banner, Footer, ProductCard, ReviewCard } from "../../components/costumer";
 import Collections from "./Collections";
 import Shop from "./Shop";

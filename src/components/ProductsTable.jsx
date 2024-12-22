@@ -7,7 +7,7 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import { useSelector, useDispatch } from 'react-redux';
-import { deleteItem } from '../store/features/items/Action';
+import { deleteItem } from '../store/features/items/ProductSlice';
 import { IoIosCreate, IoIosTrash } from "react-icons/io";
 import PropTypes from 'prop-types';
 import { Box, LinearProgress } from '@mui/material';
