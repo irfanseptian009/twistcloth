@@ -1,42 +1,96 @@
-import { createSlice } from '@reduxjs/toolkit';
-import { createAsyncThunk } from '@reduxjs/toolkit';
-import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc, query, orderBy } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
 import { uploadImage } from '../../../utils/cloudinary';
 
 // Thunks untuk operasi async
-export const fetchItems = createAsyncThunk('items/fetchItems', async () => {
-  const querySnapshot = await getDocs(collection(db, 'items'));
-  const items = [];
-  querySnapshot.forEach((doc) => {
-    items.push({ id: doc.id, ...doc.data() });
-  });
 
-  return items;
-});
+// Fetch Items dengan sort options
+export const fetchItems = createAsyncThunk(
+  'items/fetchItems',
+  async ({ sortByPrice, sortByDate } = {}, { rejectWithValue }) => {
+    try {
+      let q = collection(db, 'items');
+      const queryConstraints = [];
 
-export const addItem = createAsyncThunk('items/addItem', async (item) => {
-  const imageUrl = await uploadImage(item.image);
-  const updatedItem = { ...item, image: imageUrl };
-  const docRef = await addDoc(collection(db, 'items'), updatedItem);
-  return { id: docRef.id, ...updatedItem };
-});
+      // Menambahkan orderBy untuk harga
+      if (sortByPrice === 'highest') {
+        queryConstraints.push(orderBy('price', 'desc'));
+      } else if (sortByPrice === 'lowest') {
+        queryConstraints.push(orderBy('price', 'asc'));
+      }
 
-export const updateItem = createAsyncThunk('items/updateItem', async (item) => {
-  if (item.image instanceof File) {
-    const imageUrl = await uploadImage(item.image);
-    item.image = imageUrl;
+      // Menambahkan orderBy untuk tanggal
+      if (sortByDate === 'newest') {
+        queryConstraints.push(orderBy('createdAt', 'desc'));
+      } else if (sortByDate === 'oldest') {
+        queryConstraints.push(orderBy('createdAt', 'asc'));
+      }
+
+      // Membuat query jika ada constraint
+      if (queryConstraints.length > 0) {
+        q = query(q, ...queryConstraints);
+      }
+
+      const querySnapshot = await getDocs(q);
+      const items = [];
+      querySnapshot.forEach((doc) => {
+        const data = doc.data();
+        items.push({ id: doc.id, ...data });
+      });
+
+      return items;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
   }
-  const itemRef = doc(db, 'items', item.id);
-  await updateDoc(itemRef, item);
-  return item;
-});
+);
 
-export const deleteItem = createAsyncThunk('items/deleteItem', async (id) => {
-  await deleteDoc(doc(db, 'items', id));
-  return id;
-});
+// Thunk untuk menambahkan item
+export const addItem = createAsyncThunk(
+  'items/addItem',
+  async (item, { rejectWithValue }) => {
+    try {
+      const imageUrl = await uploadImage(item.image);
+      const updatedItem = { ...item, image: imageUrl, createdAt: new Date().toISOString() };
+      const docRef = await addDoc(collection(db, 'items'), updatedItem);
+      return { id: docRef.id, ...updatedItem };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
+// Thunk untuk memperbarui item
+export const updateItem = createAsyncThunk(
+  'items/updateItem',
+  async (item, { rejectWithValue }) => {
+    try {
+      if (item.image instanceof File) {
+        const imageUrl = await uploadImage(item.image);
+        item.image = imageUrl;
+      }
+      const itemRef = doc(db, 'items', item.id);
+      await updateDoc(itemRef, item);
+      return item;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thunk untuk menghapus item
+export const deleteItem = createAsyncThunk(
+  'items/deleteItem',
+  async (id, { rejectWithValue }) => {
+    try {
+      await deleteDoc(doc(db, 'items', id));
+      return id;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const itemsSlice = createSlice({
   name: 'items',
@@ -58,7 +112,7 @@ const itemsSlice = createSlice({
       })
       .addCase(fetchItems.rejected, (state, action) => {
         state.status = 'failed';
-        state.error = action.error.message;
+        state.error = action.payload;
       })
       // Add Item
       .addCase(addItem.fulfilled, (state, action) => {

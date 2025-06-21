@@ -1,6 +1,7 @@
 
-import  DetailProduct  from "./costumer/ProductDetail";
+import  DetailProductPage  from "./costumer/ProductDetailPage";
 import HomeSeller from "./HomeSeller";
 import ListProduct from './ListProduct';
+import DemoPage from './DemoPage';
 
-export {  DetailProduct, HomeSeller, ListProduct };
+export {  DetailProductPage, HomeSeller, ListProduct, DemoPage };

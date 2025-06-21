@@ -2,16 +2,17 @@
 import { createBrowserRouter } from "react-router";
 import SignUp from '../auth/SignUp';
 import SignIn  from "../auth/SignIn";
-import { HomeSeller, ListProduct} from "../pages";
+import { HomeSeller, ListProduct, DemoPage} from "../pages";
 import ProtectedRoute from "./ProtectedRoute";
 import { MainLayout } from "../layout";
 import { MainLayoutCostumer } from "../layout/costumer";
-import { HomeCostumer, ProductDetail } from "../pages/costumer";
+import { HomeCostumer, ProductDetailPage } from "../pages/costumer";
 import PrivateRoute from "./privateRoute";
 
 const routes = createBrowserRouter([
   { path: "/", element: <SignIn /> },
   { path: "/SignUp", element: <SignUp /> },
+  { path: "/demo", element: <DemoPage /> },
 
 
   // part untuk seller
@@ -33,12 +34,11 @@ const routes = createBrowserRouter([
     children: [
 
       { path: "", element: <HomeCostumer /> },
-      { path: "detail/:id", element: <ProductDetail/> },
+      { path: "detail/:id", element: <ProductDetailPage/> },
 
     ],
     },
 
-      // Fallback for undefined routes
   {
     path: "*",
     element: <div>404 - Page Not Found</div>,

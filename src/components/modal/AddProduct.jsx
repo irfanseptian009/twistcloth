@@ -1,8 +1,8 @@
-// src/components/AddProduct.jsx
 import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { addItem, updateItem } from '../../store/features/items/ProductSlice';
 import PropTypes from 'prop-types';
+import { toast } from 'react-toastify';
 
 const AddProduct = ({ onClose, currentItem }) => {
   const dispatch = useDispatch();
@@ -45,6 +45,7 @@ const AddProduct = ({ onClose, currentItem }) => {
       setForm((prevForm) => ({ ...prevForm, [name]: file }));
     } else {
       setForm((prevForm) => ({ ...prevForm, [name]: value }));
+      
     }
   };
 
@@ -56,6 +57,7 @@ const AddProduct = ({ onClose, currentItem }) => {
       await dispatch(addItem(form));
     }
     onClose();
+    toast.success("Item berhasil ditambahkan!");
   };
 
   return (

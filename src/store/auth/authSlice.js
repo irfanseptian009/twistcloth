@@ -1,11 +1,49 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { auth } from '../../config/firebase';
+import { auth, githubProvider, googleProvider } from '../../config/firebase';
 import { 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
-  onAuthStateChanged 
+  onAuthStateChanged, 
+  signInWithPopup
 } from 'firebase/auth';
+
+
+// Thunk untuk sign-in dengan Google
+export const signInWithGoogle = createAsyncThunk(
+  'auth/signInWithGoogle',
+  async (_, { rejectWithValue }) => {
+    try {
+      const result = await signInWithPopup(auth, googleProvider);
+      const user = result.user;
+      return {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+      };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
+// Thunk untuk sign-in dengan GitHub
+export const signInWithGithub = createAsyncThunk(
+  'auth/signInWithGithub',
+  async (_, { rejectWithValue }) => {
+    try {
+      const result = await signInWithPopup(auth, githubProvider);
+      const user = result.user;
+      return {
+        uid: user.uid,
+        email: user.email,
+        displayName: user.displayName,
+      };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 // Thunk untuk login
 export const login = createAsyncThunk(
@@ -130,10 +168,37 @@ const authSlice = createSlice({
       .addCase(logout.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
-      });
-  },
+      })
+      // Sign-in dengan Google
+      .addCase(signInWithGoogle.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(signInWithGoogle.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(signInWithGoogle.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      // Sign-in dengan GitHub
+      .addCase(signInWithGithub.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(signInWithGithub.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+      })
+      .addCase(signInWithGithub.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+  }
 });
-
 export const { setUser } = authSlice.actions;
 
 export default authSlice.reducer;
