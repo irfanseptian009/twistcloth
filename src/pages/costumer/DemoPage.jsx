@@ -1,9 +1,9 @@
 import { useState } from 'react';
 import { Box, Typography, } from '@mui/material';
 import { FaCamera, FaRobot, FaPalette, FaMagic } from 'react-icons/fa';
-import EnhancedSkinToneDetector from '../components/costumer/EnhancedSkinToneDetector';
-import AdvancedStylistChatbot from '../components/costumer/AdvancedStylistChatbot';
-import { useTheme } from '../contexts/ThemeContext';
+import EnhancedSkinToneDetector from '../../components/costumer/EnhancedSkinToneDetector';
+import AdvancedStylistChatbot from '../../components/costumer/AdvancedStylistChatbot';
+import { useTheme } from '../../contexts/ThemeContext';
 
 function DemoPage() {
   const [detectedSkinTone, setDetectedSkinTone] = useState(null);
@@ -58,9 +58,7 @@ function DemoPage() {
       <div className="max-w-6xl mx-auto">
         {/* Header */}
         <div className="text-center mb-12">
-          <Typography variant="h3" className={`font-bold ${colors.text} mb-4 animate-in slide-in-from-top duration-700`}>
-            🎨 AI Darknessmerch Fashion Assistant
-          </Typography>
+        
           <Typography variant="h6" className={`${colors.textSecondary}  mx-auto  animate-in slide-in-from-top duration-700 delay-200`}>
             Coba fitur-fitur terbaru kami: deteksi warna kulit dengan AI dan konsultasi dengan stylist virtual!
           </Typography>

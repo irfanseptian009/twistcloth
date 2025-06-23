@@ -2,26 +2,30 @@
 import { createBrowserRouter } from "react-router";
 import SignUp from '../auth/SignUp';
 import SignIn  from "../auth/SignIn";
-import { HomeSeller, ListProduct, DemoPage} from "../pages";
 import ProtectedRoute from "./ProtectedRoute";
 import { MainLayout } from "../layout";
 import { MainLayoutCostumer } from "../layout/costumer";
-import { HomeCostumer, ProductDetailPage } from "../pages/costumer";
+import { HomeCostumer, ProductDetailPage, DemoPage,  } from "../pages/costumer";
 import PrivateRoute from "./privateRoute";
+import GLBViewerDemo from "../pages/costumer/GLBViewerDemo";
+import Admin from "../pages/admin/Admin";
+import ListProduct from "../pages/admin/ListProduct";
 
 const routes = createBrowserRouter([
   { path: "/", element: <SignIn /> },
   { path: "/SignUp", element: <SignUp /> },
   { path: "/demo", element: <DemoPage /> },
+   {path: "/screenshot-demo",element: <GLBViewerDemo />,},
+   {path: "/glb-demo",element: <GLBViewerDemo />,},
 
 
-  // part untuk seller
+  // part untuk admin
   {
-    path: "/seller",
+    path: "/admin",
     element: <ProtectedRoute><MainLayout /></ProtectedRoute>,
     children: [
      
-      { path: "", element: <HomeSeller /> }, 
+      { path: "", element: <Admin /> }, 
       { path: "products", element: <ListProduct /> },
     ],
     

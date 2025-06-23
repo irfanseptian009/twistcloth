@@ -1,12 +1,12 @@
 import { useState, useEffect } from "react";
-import ProductsTable from "../components/ProductsTable";
-import Modal from '../components/modal/Modal';
+import ProductsTable from "../../components/ProductsTable";
+import Modal from '../../components/modal/Modal';
 import { IoIosAddCircleOutline } from "react-icons/io";
-import AddProduct from "../components/modal/addProduct";
+import AddProduct from "../../components/modal/AddProduct";
 import { useDispatch, useSelector } from 'react-redux';
-import { fetchItems } from '../store/features/items/ProductSlice';
-import { useTheme } from "../contexts/ThemeContext";
-import { ThemeToggle } from "../components/UI/ThemeToggle";
+import { fetchItems } from '../../store/features/items/ProductSlice';
+import { useTheme } from "../../contexts/ThemeContext";
+import { ThemeToggle } from "../../components/UI/ThemeToggle";
 
 const ListProduct = () => {
   const dispatch = useDispatch();

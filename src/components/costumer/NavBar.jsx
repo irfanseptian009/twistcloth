@@ -8,7 +8,8 @@ import { Menu } from "@headlessui/react";
 import { auth } from "../../config/firebase";
 import { signOut } from "firebase/auth";
 import { useTheme } from "../../contexts/ThemeContext";
-import { ThemeSelector, } from "../UI/ThemeToggle";
+import { ThemeSelector } from "../UI/ThemeToggle";
+import { Link as RouterLink } from "react-router-dom";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -79,8 +80,7 @@ const Navbar = () => {
             >
               Collections
             </ScrollLink>
-          </li>
-          <li>
+          </li>          <li>
             <ScrollLink 
               to="review" 
               smooth={true} 
@@ -89,6 +89,15 @@ const Navbar = () => {
             >
               Review
             </ScrollLink>
+          </li>
+          <li>
+            <RouterLink 
+              to="/screenshot-demo"
+              className={`cursor-pointer hover:${colors.primary} transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:${colors.surfaceSecondary} flex items-center space-x-1`}
+            >
+              <span>📸</span>
+              <span>AI Demo</span>
+            </RouterLink>
           </li>
         </ul>
 
@@ -186,14 +195,20 @@ const Navbar = () => {
                 onClick={() => setMenuOpen(false)}
               >
                 Collections
-              </ScrollLink>
-              <ScrollLink
+              </ScrollLink>              <ScrollLink
                 className={`menu-item block py-3 px-4 ${colors.text} hover:${colors.surfaceSecondary} rounded-lg mx-4 transition-all duration-200 cursor-pointer`}
                 to="review"
                 onClick={() => setMenuOpen(false)}
               >
                 Review
               </ScrollLink>
+              <RouterLink
+                to="/screenshot-demo"
+                className={`menu-item block py-3 px-4 ${colors.text} hover:${colors.surfaceSecondary} rounded-lg mx-4 transition-all duration-200 cursor-pointer`}
+                onClick={() => setMenuOpen(false)}
+              >
+                📸 AI Demo
+              </RouterLink>
               <div
                 onClick={() => {
                   handleLogout();

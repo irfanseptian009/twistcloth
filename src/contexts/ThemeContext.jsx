@@ -70,14 +70,14 @@ export const ThemeProvider = ({ children }) => {
     // Theme colors
     colors: {
       primary: isDarkMode 
-        ? 'from-purple-600 to-pink-600' 
-        : 'from-purple-500 to-pink-500',
+        ? 'from-gray-600 to-gray-600' 
+        : 'from-gray-500 to-gray-500',
       secondary: isDarkMode 
-        ? 'from-blue-600 to-purple-600' 
-        : 'from-blue-500 to-purple-500',
+        ? 'from-blue-600 to-gray-600' 
+        : 'from-blue-500 to-gray-500',
       background: isDarkMode 
         ? 'bg-gray-900' 
-        : 'bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50',
+        : 'bg-gradient-to-br from-gray-50 via-gray-50 to-blue-50',
       surface: isDarkMode 
         ? 'bg-gray-800' 
         : 'bg-white',
@@ -103,8 +103,8 @@ export const ThemeProvider = ({ children }) => {
         ? 'from-emerald-600 to-teal-600' 
         : 'from-emerald-500 to-teal-500',
       danger: isDarkMode 
-        ? 'from-red-600 to-pink-600' 
-        : 'from-red-500 to-pink-500',
+        ? 'from-red-600 to-gray-600' 
+        : 'from-red-500 to-gray-500',
       warning: isDarkMode 
         ? 'from-orange-600 to-yellow-600' 
         : 'from-orange-500 to-yellow-500',
@@ -122,13 +122,13 @@ export const ThemeProvider = ({ children }) => {
         : 'border border-white/20',
       shadow: isDarkMode 
         ? 'shadow-2xl shadow-black/20' 
-        : 'shadow-2xl shadow-purple-500/10',
+        : 'shadow-2xl shadow-gray-500/10',
     },
     // Button styles
     button: {
       primary: isDarkMode 
-        ? 'bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white' 
-        : 'bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white',
+        ? 'bg-gradient-to-r from-gray-600 to-gray-600 hover:from-gray-700 hover:to-gray-700 text-white' 
+        : 'bg-gradient-to-r from-gray-500 to-gray-500 hover:from-gray-600 hover:to-gray-600 text-white',
       secondary: isDarkMode 
         ? 'bg-gray-700 hover:bg-gray-600 text-white border-gray-600' 
         : 'bg-white hover:bg-gray-50 text-gray-800 border-gray-200',

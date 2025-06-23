@@ -1,4 +1,5 @@
 import { useGLTF } from '@react-three/drei';
+import PropTypes from 'prop-types';
 
 export default function Avatar({ skinTone, clothingUrl }) {
   const avatar = useGLTF('/models/baju.glb');
@@ -17,3 +18,8 @@ export default function Avatar({ skinTone, clothingUrl }) {
     </group>
   );
 }
+
+Avatar.propTypes = {
+  skinTone: PropTypes.string.isRequired,
+  clothingUrl: PropTypes.string.isRequired,
+};

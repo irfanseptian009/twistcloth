@@ -73,9 +73,8 @@ const ReviewCard = () => {
           </div>
 
           <div className="relative mb-4">
-            <ImQuotesLeft className={`${colors.textMuted} absolute -top-2 -left-2 opacity-30`} size={24} />
-            <p className={`${colors.text} leading-relaxed italic pl-6 relative z-10`}>
-              "{review.text}"
+            <ImQuotesLeft className={`${colors.textMuted} absolute -top-2 -left-2 opacity-30`} size={24} />            <p className={`${colors.text} leading-relaxed italic pl-6 relative z-10`}>
+              &ldquo;{review.text}&rdquo;
             </p>
           </div>
 

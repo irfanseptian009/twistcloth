@@ -1,13 +1,13 @@
 import { Outlet } from "react-router"
-import { NavBar } from "../components"
 import Header from "../components/costumer/Header"
+import Navbar from "../components/costumer/NavBar"
 
 
 
 const MainLayout = () => {
   return (
     <>
-    <NavBar/>
+    <Navbar/>
     <Header/>
       <Outlet />
     </>

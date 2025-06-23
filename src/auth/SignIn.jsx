@@ -6,7 +6,6 @@ import { Link, useNavigate } from "react-router";
 import bg from "../assets/authbg.jpg";
 import { toast } from "react-toastify";
 import { AiOutlineShopping } from "react-icons/ai";
-import { Box, LinearProgress } from "@mui/material";
 import { FaGoogle, FaGithub } from "react-icons/fa"; 
 import { useTheme } from "../contexts/ThemeContext";
 import { ThemeToggle } from "../components/UI/ThemeToggle";

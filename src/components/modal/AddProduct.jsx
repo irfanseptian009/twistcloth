@@ -2,10 +2,13 @@ import { useState, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
 import { addItem, updateItem } from '../../store/features/items/ProductSlice';
 import PropTypes from 'prop-types';
-import { toast } from 'react-toastify';
+import toast from 'react-hot-toast';
+import { FiX, FiUpload, FiSave, FiLoader } from 'react-icons/fi';
 
 const AddProduct = ({ onClose, currentItem }) => {
   const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
+  const [imagePreview, setImagePreview] = useState(null);
   const [form, setForm] = useState({
     image: null, 
     name: '',
@@ -25,6 +28,9 @@ const AddProduct = ({ onClose, currentItem }) => {
         categoryId: currentItem.categoryId || '',
         description: currentItem.description || '',
       });
+      if (currentItem.image) {
+        setImagePreview(currentItem.image);
+      }
     } else {
       setForm({
         image: null,
@@ -34,6 +40,7 @@ const AddProduct = ({ onClose, currentItem }) => {
         categoryId: '',
         description: '',
       });
+      setImagePreview(null);
     }
   }, [currentItem]);
 
@@ -41,137 +48,225 @@ const AddProduct = ({ onClose, currentItem }) => {
     const { name, type, value, files } = e.target;
     if (type === 'file') {
       const file = files[0];
-      console.log("Selected file:", file);
-      setForm((prevForm) => ({ ...prevForm, [name]: file }));
+      if (file) {
+        setForm((prevForm) => ({ ...prevForm, [name]: file }));
+        
+        // Create image preview
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result);
+        };
+        reader.readAsDataURL(file);
+      }
     } else {
       setForm((prevForm) => ({ ...prevForm, [name]: value }));
-      
     }
+  };
+  const handleFileInputClick = (e) => {
+    e.stopPropagation();
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (currentItem) {
-      await dispatch(updateItem({ id: currentItem.id, ...form }));
-    } else {
-      await dispatch(addItem(form));
+    e.stopPropagation();
+    setIsLoading(true);
+    
+    try {
+      if (currentItem) {
+        await dispatch(updateItem({ id: currentItem.id, ...form })).unwrap();
+        toast.success(`Product "${form.name}" updated successfully!`);
+      } else {
+        await dispatch(addItem(form)).unwrap();
+        toast.success(`Product "${form.name}" added successfully!`);
+      }
+      onClose();
+    } catch {
+      toast.error(currentItem ? "Failed to update product" : "Failed to add product");
+    } finally {
+      setIsLoading(false);
     }
-    onClose();
-    toast.success("Item berhasil ditambahkan!");
   };
 
-  return (
-    <div>
-      <h4 className="text-center mb-4 font-bold text-lg">
-        {currentItem ? 'Edit Product' : 'Add New Product'}
-      </h4>
-      <div className="py-1 px-5 rounded-xl font-thin shadow-xl border-2">
-        <form onSubmit={handleSubmit} className="flex flex-col xl:grid xl:grid-cols-2 md:grid md:grid-cols-2 gap-4 text-start">
-          {/* Bagian kiri form */}
-          <div>
-            <label className="block mb-2">
-              <span className="text-gray-700">Name</span>
+  const categories = [
+    { id: 'men', label: 'Men\'s Fashion' },
+    { id: 'women', label: 'Women\'s Fashion' },
+    { id: 'accessories', label: 'Accessories' },
+    { id: 'shoes', label: 'Shoes' },
+    { id: 'bags', label: 'Bags' },
+  ];  return (
+    <div className="p-6">
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          
+          {/* Left Column */}
+          <div className="space-y-6">
+            
+            {/* Product Name */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Product Name *
+              </label>
               <input
                 type="text"
                 name="name"
                 placeholder="Enter product name"
                 value={form.name}
                 onChange={handleChange}
-                className="mt-1 border-2 w-full rounded-md p-2 border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150"
                 required
               />
-            </label>
+            </div>
 
-            <label className="block mb-2">
-              <span className="text-gray-700">Price</span>
-              <input
-                type="number"
-                name="price"
-                placeholder="Enter product price"
-                value={form.price}
-                onChange={handleChange}
-                className="mt-1 border-2 w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                required
-              />
-            </label>
+            {/* Price and Stock */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Price (IDR) *
+                </label>
+                <input
+                  type="number"
+                  name="price"
+                  placeholder="0"
+                  value={form.price}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150"
+                  required
+                  min="0"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Stock *
+                </label>
+                <input
+                  type="number"
+                  name="stock"
+                  placeholder="0"
+                  value={form.stock}
+                  onChange={handleChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150"
+                  required
+                  min="0"
+                />
+              </div>
+            </div>
 
-            <label className="block mb-2">
-              <span className="text-gray-700">Stock</span>
-              <input
-                type="number"
-                name="stock"
-                placeholder="Enter product stock"
-                value={form.stock}
-                onChange={handleChange}
-                className="mt-1 border-2 w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                required
-              />
-            </label>
-
-            <label className="block mb-2">
-              <span className="text-gray-700">Category ID</span>
-              <input
-                type="text"
+            {/* Category */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Category *
+              </label>
+              <select
                 name="categoryId"
-                placeholder="Enter category ID"
                 value={form.categoryId}
                 onChange={handleChange}
-                className="mt-1 border-2 w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150"
                 required
-              />
-            </label>
+              >
+                <option value="">Select a category</option>
+                {categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.label}
+                  </option>
+                ))}
+              </select>
+            </div>
           </div>
 
-          {/* Bagian kanan form */}
-          <div>
-            <label className="block mb-2">
-              <span className="text-gray-700">Description</span>
+          {/* Right Column */}
+          <div className="space-y-6">
+            
+            {/* Description */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Description *
+              </label>
               <textarea
                 name="description"
                 placeholder="Enter product description"
                 rows="4"
                 value={form.description}
                 onChange={handleChange}
-                className="mt-1 border-2 w-full p-2 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-colors duration-150 resize-none"
                 required
               />
-            </label>
-            <label className="block mb-2">
-              <span className="text-gray-700">Image</span>
-              <input
-                type="file"
-                name="image"
-                onChange={handleChange}
-                accept="image/*"
-                className="mt-1 border-2 block w-full"
-                required={!currentItem}
-              />
-              {currentItem && typeof form.image === 'string' && (
-                <img src={form.image} alt={form.name} width="100" className="mt-2" />
-              )}
-            </label>
+            </div>            {/* Image Upload */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Product Image {!currentItem && '*'}
+              </label>
+              <div className="relative">
+                {imagePreview ? (
+                  <div className="relative border-2 border-gray-300 rounded-lg overflow-hidden">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="w-full h-40 object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-30 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity duration-200">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setImagePreview(null);
+                          setForm(prev => ({ ...prev, image: null }));
+                        }}
+                        className="p-2 bg-red-500 text-white rounded-full hover:bg-red-600 transition-colors duration-150"
+                      >
+                        <FiX className="w-4 h-4" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center hover:border-indigo-400 transition-colors duration-150 cursor-pointer">
+                    <FiUpload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-600 mb-2">Click to upload or drag and drop</p>
+                    <p className="text-sm text-gray-500">PNG, JPG, GIF up to 10MB</p>
+                  </div>
+                )}
+                <input
+                  type="file"
+                  name="image"
+                  onChange={handleChange}
+                  onClick={handleFileInputClick}
+                  accept="image/*"
+                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                  required={!currentItem && !imagePreview}
+                />
+              </div>
+            </div>
           </div>
+        </div>
 
-          {/* Tombol Submit dan Update */}
-          <div className="col-span-2 flex justify-end">
-            {currentItem && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="btn bg-gray-300 rounded-md p-2 m-2 w-auto text-black font-bold text-xs shadow-lg hover:bg-gray-500"
-              >
-                Cancel
-              </button>
+        {/* Action Buttons */}
+        <div className="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+          <button
+            type="button"
+            onClick={onClose}
+            disabled={isLoading}
+            className="px-6 py-3 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="px-6 py-3 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors duration-150 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+          >
+            {isLoading ? (
+              <>
+                <FiLoader className="w-4 h-4 mr-2 animate-spin" />
+                {currentItem ? 'Updating...' : 'Adding...'}
+              </>
+            ) : (
+              <>
+                <FiSave className="w-4 h-4 mr-2" />
+                {currentItem ? 'Update Product' : 'Add Product'}
+              </>
             )}
-            <button
-              type="submit"
-              className="btn bg-slate-800 rounded-md p-2 m-2 w-auto text-white text-xs font-bold shadow-lg hover:bg-gray-600"
-            >
-              {currentItem ? 'Update' : 'Submit'}
-            </button>
-          </div>
-        </form>
-      </div>
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

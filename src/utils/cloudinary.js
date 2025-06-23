@@ -1,4 +1,3 @@
-// src/utils/cloudinary.js
 import axios from 'axios';
 
 const CLOUDINARY_URL = 'https://api.cloudinary.com/v1_1/duk8twato/image/upload'; 

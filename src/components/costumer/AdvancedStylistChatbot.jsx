@@ -217,7 +217,7 @@ Selalu akhiri dengan pertanyaan untuk melanjutkan percakapan.
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-400 rounded-full"></div>
                   </div>
                   <div>
-                    <h3 className="font-bold text-lg">AI Stylist Premium</h3>
+                    <h3 className="font-bold text-lg">AI Darknessmerch Chatbot</h3>
                     <p className="text-sm opacity-90">Fashion Expert • Online</p>
                   </div>
                 </div>
