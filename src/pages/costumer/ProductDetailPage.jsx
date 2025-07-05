@@ -3,11 +3,12 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Typography, CircularProgress, Rating, } from '@mui/material';
 import { FaHeart, FaShareAlt, FaCamera, FaPalette, FaRobot, FaHistory, FaShoppingBag } from 'react-icons/fa';
-import { FiRefreshCcw, FiZoomIn, FiZoomOut, FiHome } from 'react-icons/fi';
+import { FiRefreshCcw, FiZoomIn, FiZoomOut, FiHome, FiBox } from 'react-icons/fi';
 import { MdFullscreen, MdFullscreenExit } from 'react-icons/md';
 import { HiSparkles, HiColorSwatch } from 'react-icons/hi';
 import { fetchItems } from '../../store/features/items/ProductSlice';
 import Simple3DViewer from '../../components/Simple3DViewer';
+import ImageGallery from '../../components/UI/ImageGallery';
 import bg from '../../assets/authbg.jpg';
 import { 
   OutfitRecommendationForm, 
@@ -32,10 +33,11 @@ function ProductDetailPage() {
   const { colors, glass, button } = useTheme();
 
   const [isRotating, setIsRotating] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-  const [zoomInTrigger, setZoomInTrigger] = useState(0);
+  const [isFullscreen, setIsFullscreen] = useState(false);  const [zoomInTrigger, setZoomInTrigger] = useState(0);
   const [zoomOutTrigger, setZoomOutTrigger] = useState(0);
-  const [resetTrigger, setResetTrigger] = useState(0);
+  const [resetTrigger, setResetTrigger] = useState(0);  const [selectedSize, setSelectedSize] = useState('M');
+  const [show3D, setShow3D] = useState(true);
+  const [selectedVariant, setSelectedVariant] = useState(0); // Index of selected 3D variant
   
   // Handle stylist response from screenshot feature
   const handleStylistResponse = (responseData) => {
@@ -100,8 +102,14 @@ Tolong jawab dengan ringkas dan jelas.
   }
 }
 
-
   const product = items.find((it) => String(it.id) === String(id));
+  
+  // Initialize selected variant
+  useEffect(() => {
+    if (product?.model3DVariants?.length > 0) {
+      setSelectedVariant(0);
+    }
+  }, [product]);
 
   if (loadingItems) {
     return (
@@ -123,17 +131,9 @@ Tolong jawab dengan ringkas dan jelas.
         <button onClick={() => navigate(-1)} className={`mt-4 ${button.primary} px-6 py-2 rounded-lg`}>
           Kembali
         </button>
-      </Box>
-    );
+      </Box>    );
   }
-  const productColors = ['blue', 'yellow', 'red', 'orange'];
-  const colorClasses = {
-    blue: 'bg-blue-500',
-    yellow: 'bg-yellow-500',
-    red: 'bg-red-500',
-    orange: 'bg-orange-500',
-  };
-
+  
   const featureTabs = [
     {
       id: 'product',
@@ -211,65 +211,131 @@ Tolong jawab dengan ringkas dan jelas.
             border: '1.5px solid rgba(255,255,255,0.22)',
           }}
         >
-          <div className="flex flex-col lg:flex-row">
-            
-            {/* 3D Viewer Section */}
-            <div className="lg:w-1/2   flex flex-col items-center justify-center">
-              <div className="relative rounded-2xl overflow-hidden">
-                <Simple3DViewer
-                  ref={canvasRef}
-                  isRotating={isRotating}
-                  isFullscreen={isFullscreen}
-                  setIsFullscreen={setIsFullscreen}
-                  zoomInTrigger={zoomInTrigger}
-                  zoomOutTrigger={zoomOutTrigger}
-                  resetTrigger={resetTrigger}
-                />
-
-                {/* 3D Controls - Liquid Glass Style */}
-                <div className={`absolute ${isFullscreen ? 'top-4 right-4' : 'bottom-4 right-4'} flex flex-col space-y-2`}>
-                  {[
-                    { icon: FiRefreshCcw, action: () => setIsRotating(!isRotating), active: isRotating, title: 'Toggle Rotation' },
-                    { icon: FiZoomIn, action: () => setZoomInTrigger(v => v + 1), title: 'Zoom In' },
-                    { icon: FiZoomOut, action: () => setZoomOutTrigger(v => v + 1), title: 'Zoom Out' },
-                    { icon: FiHome, action: () => setResetTrigger(v => v + 1), title: 'Reset View' },
-                    { icon: isFullscreen ? MdFullscreenExit : MdFullscreen, action: () => setIsFullscreen(!isFullscreen), title: 'Fullscreen' }
-                  ].map((ctrl, idx) => (
-                    <button
-                      key={idx}
-                      title={ctrl.title}
-                      onClick={ctrl.action}
-                      className={`w-12 h-12 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-110 transition-all duration-300 flex items-center justify-center group shadow-lg hover:shadow-xl ${ctrl.active ? 'ring-2 ring-purple-500' : ''}`}
-                    >
-                      <ctrl.icon className={`${ctrl.active ? 'text-purple-500 animate-spin' : colors.textSecondary} group-hover:scale-110 transition-transform`} />
-                    </button>
-                  ))}
+          <div className="flex flex-col lg:flex-row">            {/* 3D Viewer Section */}
+            <div className="lg:w-1/2 flex flex-col items-center justify-center">              {/* 3D Models & Variants Selection */}
+              {product.model3DVariants && product.model3DVariants.length > 0 && (
+                <div className="w-full mb-4">
+                  {/* <h4 className={`font-semibold mb-3 ${colors.text} flex items-center`}>
+                    <FiBox className="mr-2 text-purple-500" />
+                    3D Model Variants ({product.model3DVariants.length} available)
+                  </h4> */}
+                  {/* <div className="flex flex-wrap gap-2">
+                    {product.model3DVariants.map((variant, index) => (
+                      <button
+                        key={variant.id}
+                        onClick={() => {
+                          console.log('Selected variant:', variant); // Debug log
+                          setSelectedVariant(index);
+                        }}
+                        className={`px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300 flex items-center space-x-2 ${
+                          selectedVariant === index
+                            ? 'bg-purple-500 text-white shadow-lg scale-105'
+                            : `${glass.background} ${glass.border} ${colors.text} hover:scale-105`
+                        }`}
+                      >
+                        <div
+                          className="w-4 h-4 rounded-full border-2 border-white"
+                          style={{ backgroundColor: variant.colorHex || '#000000' }}
+                        />
+                        <span>{variant.name || `Variant ${index + 1}`}</span>
+                      </button>
+                    ))}                  </div> */}
+               
                 </div>
-
-                {/* Helper Text */}
-                {/* <div className={`absolute bottom-4 left-4 ${colors.text} bg-transparent text-xs px-4 py-2 rounded-xl backdrop-blur-xl shadow-lg`}>
-                  <div className="flex items-center space-x-2">
-                    <HiSparkles className="text-purple-400" />
-                    <span>Drag to orbit • Scroll to zoom</span>
-                  </div>
-                </div> */}
+              )}          
+              {show3D && product.iframeUrl && (
+                <div className="relative rounded-2xl  p-10 w-full overflow-hidden">
+                  <iframe
+                    title="3D Model Viewer"
+                    allow="autoplay; fullscreen; xr-spatial-tracking"
+                    width="100%"
+                    height="480"
+                    src={product.iframeUrl}
+                    style={{ border: 0, width: '100%', minHeight: 400, borderRadius: 16 }}
+                    allowFullScreen
+                  />
+                    {/* 3D Toggle Button */}
+              <div className="w-full  flex justify-center mt-5  gap-3">
+                <button
+                  onClick={() => setShow3D(!show3D)}
+                  className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 ${
+                    show3D ? 'text-purple-500 ring-2 ring-purple-500' : colors.text
+                  }`}
+                >
+                  <FiBox className="w-3 h-3" />
+                  <span>{show3D ? 'Hide 3D Model' : 'Show 3D Model'}</span>
+                </button>
               </div>
-
-              {/* Product Thumbnails */}
-              <div className="flex mt-6 gap-3 justify-center">
-                {[...Array(4)].map((_, i) => (
-                  <div
-                    key={i}
-                    className={`w-16 h-16 ${glass.background} ${glass.border} rounded-xl overflow-hidden backdrop-blur-xl hover:scale-105 transition-all duration-300 cursor-pointer shadow-lg hover:shadow-xl`}
-                  >
-                    <img
-                      src={product.image}
-                      alt={`View ${i + 1}`}
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                ))}
+                </div>
+              )}
+               
+              {show3D && (!product.iframeUrl && (product.model3D || (product.model3DVariants && product.model3DVariants.length > 0))) && (
+                <div className="relative rounded-2xl overflow-hidden">
+                  <div>
+                    <Simple3DViewer
+                      ref={canvasRef}
+                      isRotating={isRotating}
+                      isFullscreen={isFullscreen}
+                    setIsFullscreen={setIsFullscreen}
+                    zoomInTrigger={zoomInTrigger}
+                    zoomOutTrigger={zoomOutTrigger}
+                    resetTrigger={resetTrigger}
+                    modelUrl={
+                      product.model3DVariants && product.model3DVariants.length > 0
+                        ? product.model3DVariants[selectedVariant]?.modelUrl || product.model3D
+                        : product.model3D
+                    }
+                    selectedColor={
+                      product.model3DVariants && product.model3DVariants.length > 0
+                        ? product.model3DVariants[selectedVariant]?.colorHex || '#000000'
+                        : '#000000'
+                    }
+                  />
+                    {/* 3D Toggle Button */}
+              <div className="w-full  flex justify-center mt-5 mb-3  gap-3">
+                <button
+                  onClick={() => setShow3D(!show3D)}
+                  className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 ${
+                    show3D ? 'text-purple-500 ring-2 ring-purple-500' : colors.text
+                  }`}
+                >
+                  <FiBox className="w-3 h-3" />
+                  <span>{show3D ? 'Hide 3D Model' : 'Show 3D Model'}</span>
+                </button>
               </div>
+                  </div>
+                  
+                  {/* 3D Controls - Liquid Glass Style */}
+                  <div className={`absolute ${isFullscreen ? 'top-10 right-4' : 'bottom-28 right-4'} flex flex-col space-y-2`}>
+                    {[
+                      { icon: FiRefreshCcw, action: () => setIsRotating(!isRotating), active: isRotating, title: 'Toggle Rotation' },
+                      { icon: FiZoomIn, action: () => setZoomInTrigger(v => v + 1), title: 'Zoom In' },
+                      { icon: FiZoomOut, action: () => setZoomOutTrigger(v => v + 1), title: 'Zoom Out' },
+                      { icon: FiHome, action: () => setResetTrigger(v => v + 1), title: 'Reset View' },
+                      { icon: isFullscreen ? MdFullscreenExit : MdFullscreen, action: () => setIsFullscreen(!isFullscreen), title: 'Fullscreen' }
+                    ].map((ctrl, idx) => (
+                      <button
+                        key={idx}
+                        title={ctrl.title}
+                        onClick={ctrl.action}
+                        className={`w-12 h-12 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-110 transition-all duration-300 flex items-center justify-center group shadow-lg hover:shadow-xl ${ctrl.active ? 'ring-2 ring-purple-500' : ''}`}
+                      >
+                        <ctrl.icon className={`${ctrl.active ? 'text-purple-500 animate-spin' : colors.textSecondary} group-hover:scale-110 transition-transform`} />
+                      </button>
+                    ))}
+                    
+                  </div>
+                 
+                </div>
+                
+              )}              {/* Fallback when no 3D model or 3D is hidden */}
+              {(!show3D || (!product.model3D && (!product.model3DVariants || product.model3DVariants.length === 0))) && (
+                <ImageGallery
+                  mainImage={product.image}
+                  additionalImages={product.additionalImages}
+                  productName={product.name}
+                />
+              )}
             </div>
 
             {/* Product Info Section */}
@@ -296,33 +362,81 @@ Tolong jawab dengan ringkas dan jelas.
                     <Typography className={`font-semibold mb-3 ${colors.text} flex items-center`}>
                       <HiColorSwatch className="mr-2 text-purple-500" />
                       Size Selection
-                    </Typography>
-                    <div className="flex gap-3">
-                      {['XS', 'S', 'M', 'L', 'XL'].map((size) => (
-                        <button 
-                          key={size} 
-                          className={`px-4 py-2 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 ${colors.text} font-medium shadow-md hover:shadow-lg`}
-                        >
-                          {size}
-                        </button>
-                      ))}
+                    </Typography>                    <div className="flex gap-3">
+                      {/* Show sizes from selected variant if available */}
+                      {product.model3DVariants && product.model3DVariants.length > 0 && product.model3DVariants[selectedVariant]?.sizes && product.model3DVariants[selectedVariant].sizes.length > 0 ? (
+                        product.model3DVariants[selectedVariant].sizes.map((size) => (
+                          <button 
+                            key={size} 
+                            onClick={() => setSelectedSize(size)}
+                            className={`px-4 py-2 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 ${colors.text} font-medium shadow-md hover:shadow-lg ${
+                              selectedSize === size ? 'ring-2 ring-purple-500 bg-purple-500/20' : ''
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))
+                      ) : (
+                        // Default sizes if no variants or no sizes in variant
+                        ['XS', 'S', 'M', 'L', 'XL'].map((size) => (
+                          <button 
+                            key={size} 
+                            onClick={() => setSelectedSize(size)}
+                            className={`px-4 py-2 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 ${colors.text} font-medium shadow-md hover:shadow-lg ${
+                              selectedSize === size ? 'ring-2 ring-purple-500 bg-purple-500/20' : ''
+                            }`}
+                          >
+                            {size}
+                          </button>
+                        ))
+                      )}
                     </div>
-                  </div>
-
-                  {/* Color Selection */}
+                  </div>                  {/* Color Selection - Only show variant colors */}
                   <div>
                     <Typography className={`font-semibold mb-3 ${colors.text} flex items-center`}>
                       <HiSparkles className="mr-2 text-pink-500" />
                       Color Options
                     </Typography>
-                    <div className="flex gap-3">
-                      {productColors.map((color) => (
-                        <button
-                          key={color}
-                          className={`w-12 h-12 rounded-xl ${colorClasses[color]} border-2 border-white/50 hover:scale-110 transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-xl`}
-                          title={color}
-                        />
-                      ))}
+                    <div className="flex gap-3 flex-wrap">                      {/* Show colors from 3D variants if available */}
+                      {product.model3DVariants && product.model3DVariants.length > 0 ? (
+                        product.model3DVariants.map((variant, index) => (
+                          <button
+                            key={`variant-${variant.id}`}
+                            onClick={() => {
+                              setSelectedVariant(index);
+                            }}
+                            className={`flex items-center space-x-2 px-4 py-2 rounded-xl border-2 hover:scale-105 transition-all duration-300 shadow-lg hover:shadow-xl backdrop-blur-xl ${
+                              selectedVariant === index ? 'border-purple-500 ring-2 ring-purple-300 bg-purple-50' : 'border-gray-300 bg-white/50'
+                            }`}
+                            title={variant.colorName}
+                          >
+                            <div
+                              className="w-6 h-6 rounded-full border-2 border-white shadow"
+                              style={{ backgroundColor: variant.colorHex }}
+                            />
+                            <span className="text-sm font-medium text-gray-700">
+                              {variant.colorName}
+                            </span>
+                          </button>
+                        ))
+                      ) : (
+                        /* Fallback to available colors if no variants */
+                        (product.availableColors || ['#000000']).map((color, index) => (
+                          <div
+                            key={`color-${color}`}
+                            className="flex items-center space-x-2 px-4 py-2 rounded-xl border-2 shadow-lg backdrop-blur-xl border-gray-300 bg-white/50"
+                            title={`Color ${index + 1}`}
+                          >
+                            <div
+                              className="w-6 h-6 rounded-full border-2 border-white shadow"
+                              style={{ backgroundColor: color }}
+                            />
+                            <span className="text-sm font-medium text-gray-700">
+                              Color {index + 1}
+                            </span>
+                          </div>
+                        ))
+                      )}
                     </div>
                   </div>
                 </div>
@@ -571,11 +685,9 @@ Tolong jawab dengan ringkas dan jelas.
               </div>
             </div>
           )}
-        </div>
-          <AdvancedStylistChatbot 
+        </div>              <AdvancedStylistChatbot 
                   product={product} 
-                  userSkinTone={userSkinTone} 
-                />
+                  userSkinTone={userSkinTone}                />
       </div>
 
       {/* Liquid Glass Styling */}

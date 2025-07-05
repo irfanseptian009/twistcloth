@@ -5,6 +5,7 @@ import { FiSearch, FiFilter } from "react-icons/fi";
 import toast from "react-hot-toast";
 import Modal from "../UI/Modal.jsx";
 import EditProduct from "../modal/EditProduct.jsx";
+import DeleteProductModal from "../modal/DeleteProductModal.jsx";
 import {
   deleteItem,
   fetchItems,
@@ -13,7 +14,9 @@ import {
 export default function ProductsTable() {
   const dispatch = useDispatch();
   const [showEditModal, setShowEditModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
@@ -34,16 +37,30 @@ export default function ProductsTable() {
   const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
   const startIndex = (currentPage - 1) * itemsPerPage;
   const paginatedProducts = filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  const handleDelete = (product) => {
+    setSelectedProduct(product);
+    setShowDeleteModal(true);
+  };
 
-  const handleDelete = async (id, productName) => {
-    if (window.confirm(`Are you sure you want to delete "${productName}"?`)) {
-      try {
-        await dispatch(deleteItem(id)).unwrap();
-        toast.success(`Product "${productName}" deleted successfully!`);
-      } catch {
-        toast.error("Failed to delete product. Please try again.");
-      }
+  const handleConfirmDelete = async () => {
+    if (!selectedProduct) return;
+    
+    setIsDeleting(true);
+    try {
+      await dispatch(deleteItem(selectedProduct.id)).unwrap();
+      toast.success(`Product "${selectedProduct.name}" and all associated files deleted successfully!`);
+      setShowDeleteModal(false);
+      setSelectedProduct(null);
+    } catch {
+      toast.error("Failed to delete product. Please try again.");
+    } finally {
+      setIsDeleting(false);
     }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setSelectedProduct(null);
   };
 
   const handleEdit = (product) => {
@@ -146,8 +163,10 @@ export default function ProductsTable() {
                             <div className="text-sm font-medium text-gray-900 line-clamp-1">
                               {product.name}
                             </div>
-                            <div className="text-sm text-gray-500 line-clamp-2">
-                              {product.description}
+                            <div className="text-sm text-gray-500">
+                              {product.description.length > 40
+                                ? product.description.slice(0, 40) + "..."
+                                : product.description}
                             </div>
                           </div>
                         </div>
@@ -183,9 +202,8 @@ export default function ProductsTable() {
                             title="Edit Product"
                           >
                             <MdEdit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDelete(product.id, product.name)}
+                          </button>                          <button
+                            onClick={() => handleDelete(product)}
                             className="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors duration-150"
                             title="Delete Product"
                           >
@@ -250,8 +268,7 @@ export default function ProductsTable() {
             </button>
           </div>
         </div>
-      )}      {/* Edit Product Modal */}
-      <Modal
+      )}      {/* Edit Product Modal */}      <Modal
         isOpen={showEditModal}
         onClose={() => {
           setShowEditModal(false);
@@ -268,6 +285,15 @@ export default function ProductsTable() {
           }}
         />
       </Modal>
+
+      {/* Delete Product Modal */}
+      <DeleteProductModal
+        isOpen={showDeleteModal}
+        onClose={handleCancelDelete}
+        onConfirm={handleConfirmDelete}
+        product={selectedProduct}
+        isDeleting={isDeleting}
+      />
     </>
   );
 }

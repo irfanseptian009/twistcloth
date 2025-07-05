@@ -86,6 +86,26 @@ export const updateCartItem = createAsyncThunk(
   }
 );
 
+// Clear Cart
+export const clearCart = createAsyncThunk(
+  'cart/clearCart',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const cartCollection = collection(db, 'carts', userId, 'items');
+      const querySnapshot = await getDocs(cartCollection);
+      
+      const deletePromises = querySnapshot.docs.map(doc => 
+        deleteDoc(doc.ref)
+      );
+      
+      await Promise.all(deletePromises);
+      return userId;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
+
 const cartSlice = createSlice({
   name: 'cart',
   initialState: {
@@ -119,13 +139,16 @@ const cartSlice = createSlice({
       // Remove from Cart
       .addCase(removeFromCart.fulfilled, (state, action) => {
         state.carts = state.carts.filter(item => item.id !== action.payload);
-      })
-      // Update Cart Item
+      })      // Update Cart Item
       .addCase(updateCartItem.fulfilled, (state, action) => {
         const index = state.carts.findIndex(item => item.id === action.payload.id);
         if (index !== -1) {
           state.carts[index].quantity = action.payload.quantity;
         }
+      })
+      // Clear Cart
+      .addCase(clearCart.fulfilled, (state) => {
+        state.carts = [];
       });
   },
 });

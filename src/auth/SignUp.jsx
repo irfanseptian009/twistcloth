@@ -7,7 +7,7 @@ import bg from "../assets/authbg.jpg";
 import { Typography, Box, LinearProgress } from '@mui/material';
 import { toast } from 'react-toastify';
 import { useTheme } from "../contexts/ThemeContext";
-import { ThemeToggle } from "../components/UI/ThemeToggle";
+import { getRedirectPath } from "../utils/roleUtils";
 
 export default function SignUp() {
   const [email, setEmail] = useState(""); 
@@ -18,14 +18,20 @@ export default function SignUp() {
   const navigate = useNavigate();
   const { colors, glass, button } = useTheme();
   
-  const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
+  const { user, loading, error } = useSelector((state) => state.auth);
   const [successMessage, setSuccessMessage] = useState("");
   
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/home");
+    if (user) {
+      // Redirect berdasarkan role user
+      const redirectPath = getRedirectPath(user.role);
+      navigate(redirectPath);
+      
+      // Show welcome message with role info
+      const roleText = user.role === 'admin' ? 'Admin' : 'Customer';
+      toast.success(`Pendaftaran berhasil! Selamat Datang, ${roleText}!`, { autoClose: 2000 });
     }
-  }, [isAuthenticated, navigate]);
+  }, [user, navigate]);
   
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -43,12 +49,14 @@ export default function SignUp() {
   
     dispatch(signup({ email, password }))
       .unwrap()
-      .then(() => {
+      .then((userData) => {
         setSuccessMessage("Pendaftaran berhasil!");
-        toast.success("Pendaftaran berhasil!");
+        // Success message akan ditampilkan di useEffect
+        console.log('Signup successful:', userData);
       })
       .catch(() => {
         setSuccessMessage("");
+        toast.error("Pendaftaran gagal!");
       });
   };
     return (
@@ -60,13 +68,7 @@ export default function SignUp() {
         backgroundRepeat: "repeat-y",
       }}
     >
-      {/* Background overlay */}
-      <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
-      
-      {/* Theme Toggle */}
-      <div className="absolute top-6 right-6 z-50">
-        <ThemeToggle variant="floating" />
-      </div>
+    
 
       <PiNote className={`${glass.background} ${glass.border} h-32 w-32 rounded-full absolute mb-96 p-4 -mt-10 shadow-2xl backdrop-blur-lg z-10 ${colors.primary}`} />
       

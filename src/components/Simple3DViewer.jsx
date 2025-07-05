@@ -10,7 +10,9 @@ const ThreeDViewerWithRef = forwardRef(({
   setIsFullscreen, 
   zoomInTrigger, 
   zoomOutTrigger, 
-  resetTrigger 
+  resetTrigger, 
+  modelUrl,
+  selectedColor = '#000000'
 }, ref) => {
   const mountRef = useRef();
   const sceneRef = useRef();
@@ -26,34 +28,36 @@ const ThreeDViewerWithRef = forwardRef(({
   });
 
   useEffect(() => {
-    if (!mountRef.current) return;
-
-    // Scene setup
+    if (!mountRef.current) return;   
     const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0xf0f0f0);
+    scene.background = new THREE.Color(0xf8f9fa); 
     sceneRef.current = scene;
 
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
-      75,
+      750,
       isFullscreen ? window.innerWidth / window.innerHeight : 400 / 320,
       0.1,
       1000
     );
     camera.position.set(0, 0, 5);
-    cameraRef.current = camera;
-
-    // Renderer setup
+    cameraRef.current = camera;    // Renderer setup
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true,
       preserveDrawingBuffer: true // Important for screenshots
     });
     renderer.setSize(
-      isFullscreen ? window.innerWidth : 400,
-      isFullscreen ? window.innerHeight : 320
+      isFullscreen ? window.innerWidth : 450,
+      isFullscreen ? window.innerHeight : 420
     );
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    
+    // Enhanced color settings
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+    
     rendererRef.current = renderer;
 
     // Controls
@@ -63,22 +67,28 @@ const ThreeDViewerWithRef = forwardRef(({
     controls.enableZoom = true;
     controls.autoRotate = isRotating;
     controls.autoRotateSpeed = 2.0;
-    controlsRef.current = controls;
-
-    // Lighting
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+    controlsRef.current = controls;    // Lighting - Enhanced for better color visibility
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.8); // Increased intensity
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1.0); // Increased intensity
     directionalLight.position.set(10, 10, 5);
     directionalLight.castShadow = true;
     scene.add(directionalLight);
 
+    // Add additional lighting for better color representation
+    const frontLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    frontLight.position.set(0, 0, 10);
+    scene.add(frontLight);
+
+    const backLight = new THREE.DirectionalLight(0xffffff, 0.3);
+    backLight.position.set(0, 0, -10);
+    scene.add(backLight);
+
     // Load GLB model
     const loader = new GLTFLoader();
-    const modelPath = '/baju.glb'; // Try baju.glb first, fallback to t-shirt.glb
-    
-    loader.load(
+    const modelPath = modelUrl || '/baju.glb'; // gunakan modelUrl jika ada
+      loader.load(
       modelPath,
       (gltf) => {
         const model = gltf.scene;
@@ -86,6 +96,30 @@ const ThreeDViewerWithRef = forwardRef(({
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
+              // Apply selected color to mesh material
+            if (child.material) {
+              const color = new THREE.Color(selectedColor);
+              
+              // Clone material to avoid affecting other instances
+              child.material = child.material.clone();
+              
+              // Apply color based on material type
+              if (child.material.isMeshStandardMaterial || child.material.isMeshPhongMaterial) {
+                // For standard/phong materials, set the color property
+                child.material.color.setHex(color.getHex());
+                
+                // If there's a texture, blend it with the color
+                if (child.material.map) {
+                  child.material.color.multiplyScalar(0.8); // Reduce intensity for better blending
+                }
+              } else if (child.material.isMeshBasicMaterial) {
+                // For basic materials, directly set color
+                child.material.color.setHex(color.getHex());
+              }
+              
+              // Force material update
+              child.material.needsUpdate = true;
+            }
           }
         });
         
@@ -189,7 +223,37 @@ const ThreeDViewerWithRef = forwardRef(({
       }
       renderer.dispose();
     };
-  }, [isRotating, isFullscreen]);
+  }, [isRotating, isFullscreen, modelUrl, selectedColor]);
+  // Effect to update model color when selectedColor changes
+  useEffect(() => {
+    if (modelRef.current && selectedColor) {
+      modelRef.current.traverse((child) => {
+        if (child.isMesh && child.material) {
+          const color = new THREE.Color(selectedColor);
+          
+          // Clone material if not already cloned to avoid affecting other instances
+          if (!child.material.isCloned) {
+            child.material = child.material.clone();
+            child.material.isCloned = true;
+          }
+          
+          // Apply color based on material type
+          if (child.material.isMeshStandardMaterial || child.material.isMeshPhongMaterial) {
+            child.material.color.setHex(color.getHex());
+            
+            // If there's a texture, blend it with the color
+            if (child.material.map) {
+              child.material.color.multiplyScalar(0.8);
+            }
+          } else if (child.material.isMeshBasicMaterial) {
+            child.material.color.setHex(color.getHex());
+          }
+          
+          child.material.needsUpdate = true;
+        }
+      });
+    }
+  }, [selectedColor]);
 
   // Handle zoom in
   useEffect(() => {
@@ -225,7 +289,7 @@ const ThreeDViewerWithRef = forwardRef(({
   }, [resetTrigger]);
 
   return (
-    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-black flex items-center justify-center' : 'w-96 h-96'}`}>
+    <div className={`relative ${isFullscreen ? 'fixed inset-0 z-50 bg-black flex items-center justify-center' : 'w-full h-full'}`}>
       <div
         ref={mountRef}
         className="w-full h-full rounded-lg  border-2 shadow-lg overflow-hidden"
@@ -261,7 +325,9 @@ ThreeDViewerWithRef.propTypes = {
   setIsFullscreen: PropTypes.func.isRequired,
   zoomInTrigger: PropTypes.number,
   zoomOutTrigger: PropTypes.number,
-  resetTrigger: PropTypes.number
+  resetTrigger: PropTypes.number,
+  modelUrl: PropTypes.string,
+  selectedColor: PropTypes.string,
 };
 
 ThreeDViewerWithRef.defaultProps = {
@@ -269,7 +335,9 @@ ThreeDViewerWithRef.defaultProps = {
   isFullscreen: false,
   zoomInTrigger: 0,
   zoomOutTrigger: 0,
-  resetTrigger: 0
+  resetTrigger: 0,
+  modelUrl: '',
+  selectedColor: '#000000',
 };
 
 export default ThreeDViewerWithRef;

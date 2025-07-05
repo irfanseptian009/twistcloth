@@ -7,6 +7,7 @@ import {
   onAuthStateChanged, 
   signInWithPopup
 } from 'firebase/auth';
+import { setUserRole } from '../../utils/roleUtils';
 
 
 // Thunk untuk sign-in dengan Google
@@ -16,10 +17,15 @@ export const signInWithGoogle = createAsyncThunk(
     try {
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+      
+      // Set role for user
+      const role = await setUserRole(user.uid, user.email);
+      
       return {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        role: role
       };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -34,10 +40,15 @@ export const signInWithGithub = createAsyncThunk(
     try {
       const result = await signInWithPopup(auth, githubProvider);
       const user = result.user;
+      
+      // Set role for user
+      const role = await setUserRole(user.uid, user.email);
+      
       return {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        role: role
       };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -52,11 +63,16 @@ export const login = createAsyncThunk(
     try {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      // Set role for user
+      const role = await setUserRole(user.uid, user.email);
+      
       // Ekstrak data yang diperlukan
       return {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        role: role
       };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -71,11 +87,16 @@ export const signup = createAsyncThunk(
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const user = userCredential.user;
+      
+      // Set role for user (new users default to customer unless admin email)
+      const role = await setUserRole(user.uid, user.email);
+      
       // Ekstrak data yang diperlukan
       return {
         uid: user.uid,
         email: user.email,
         displayName: user.displayName,
+        role: role
       };
     } catch (error) {
       return rejectWithValue(error.message);
@@ -96,13 +117,17 @@ export const logout = createAsyncThunk('auth/logout', async (_, { rejectWithValu
 export const monitorAuthState = createAsyncThunk(
   'auth/monitorAuthState',
   async (_, { dispatch }) => {
-    onAuthStateChanged(auth, (user) => {
+    onAuthStateChanged(auth, async (user) => {
       if (user) {
+        // Set/update user role (akan update jika email ada di daftar admin)
+        const role = await setUserRole(user.uid, user.email);
+        
         // Ekstrak data yang diperlukan
         dispatch(setUser({
           uid: user.uid,
           email: user.email,
           displayName: user.displayName,
+          role: role
         }));
       } else {
         dispatch(setUser(null));
@@ -123,6 +148,9 @@ const authSlice = createSlice({
     setUser(state, action) {
       state.user = action.payload;
       state.isAuthenticated = !!action.payload;
+    },
+    clearError(state) {
+      state.error = null;
     },
   },
   extraReducers: (builder) => {
@@ -199,6 +227,6 @@ const authSlice = createSlice({
       })
   }
 });
-export const { setUser } = authSlice.actions;
+export const { setUser, clearError } = authSlice.actions;
 
 export default authSlice.reducer;

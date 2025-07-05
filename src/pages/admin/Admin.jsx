@@ -2,6 +2,7 @@ import { useState } from "react";
 import AddProduct from "../../components/modal/AddProduct.jsx";
 import ProductsTable from "../../components/admin/ProductTable.jsx";
 import NavBarAdmin from "../../components/admin/NavBarAdmin.jsx";
+import CloudinaryCleanup from "../../components/admin/CloudinaryCleanup.jsx";
 import Toast from "../../components/UI/Toast.jsx";
 import Modal from "../../components/UI/Modal.jsx";
 import { FiPlus, FiPackage, FiTrendingUp, FiUsers, FiDollarSign } from "react-icons/fi";
@@ -95,10 +96,8 @@ export default function Admin() {
                 </div>
               </div>
             ))}
-          </div>
-
-          {/* Products Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200">
+          </div>          {/* Products Section */}
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 mb-8">
             <div className="px-6 py-5 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
@@ -119,6 +118,9 @@ export default function Admin() {
               <ProductsTable />
             </div>
           </div>
+
+          {/* Cloudinary Cleanup Section */}
+          <CloudinaryCleanup />
         </div>
       </div>      {/* Add Product Modal */}
       <Modal

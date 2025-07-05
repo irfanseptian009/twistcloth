@@ -14,6 +14,7 @@ import { fetchCart, removeFromCart, updateCartItem } from "../../store/features/
 import { useAuth } from "../../hooks/useAuth"; 
 import { Typography } from "@mui/material";
 import { useTheme } from "../../contexts/ThemeContext";
+import { toast } from 'react-toastify';
 
 export default function CartProduct() {
   const [open, setOpen] = useState(true);
@@ -38,6 +39,31 @@ export default function CartProduct() {
 
   const handleRemoveItem = (cartId) => {
     dispatch(removeFromCart({ userId, itemId: cartId }));
+  };
+
+  const handleCheckout = () => {
+    if (!userId) {
+      toast.error("Silakan login untuk melanjutkan checkout.", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      navigate("/signin");
+      return;
+    }
+    
+    if (carts.length === 0) {
+      toast.error("Keranjang kosong!", {
+        position: "top-right",
+        autoClose: 3000,
+      });
+      return;
+    }
+
+    navigate("/checkout");
+  };
+  const handleBackToShop = () => {
+    setOpen(false);
+    navigate("/");
   };
 
   const totalPrice = carts.reduce((sum, cart) => sum + cart.quantity * cart.price, 0);
@@ -144,17 +170,16 @@ export default function CartProduct() {
                   <div className={`flex justify-between text-lg font-bold ${colors.text} mb-6`}>
                     <p>Subtotal</p>
                     <p className={`${colors.primary}`}>Rp.{totalPrice.toLocaleString()}</p>
-                  </div>
-                  <div className="space-y-3">
-                    <button className={`w-full ${button.primary} py-3 text-base font-bold rounded-lg transition-all duration-200 hover:scale-105 active:scale-95`}>
-                      BUY NOW
+                  </div>                  <div className="space-y-3">
+                    <button 
+                      onClick={handleCheckout}
+                      className={`w-full ${button.primary} py-3 text-base font-bold rounded-lg transition-all duration-200 hover:scale-105 active:scale-95`}
+                    >
+                      CHECKOUT
                     </button>
                     <button
                       className={`w-full ${button.secondary} py-2 text-sm rounded-lg transition-all duration-200`}
-                      onClick={() => {
-                        setOpen(false);
-                        navigate("/"); // Pastikan rute "/" adalah halaman shop Anda
-                      }}
+                      onClick={handleBackToShop}
                     >
                       Back to Shop
                     </button>

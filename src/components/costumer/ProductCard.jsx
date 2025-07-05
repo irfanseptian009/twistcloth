@@ -17,13 +17,14 @@ const ProductCard = ({ items }) => {
   const userId = user?.uid;
 
   const cartItems = useSelector((state) => state.cart.carts);
-
   const handleAddToCart = (item) => {
     if (!userId) {
       toast.error("Silakan login untuk menambahkan ke keranjang.", {
         position: "top-right",
         autoClose: 3000,
       });
+      // Redirect to signin page
+      navigate("/signin");
       return;
     }
 
@@ -62,7 +63,7 @@ const ProductCard = ({ items }) => {
   };
 
   const handleCardClick = (id) => {
-    navigate(`/home/detail/${id}`);
+    navigate(`/detail/${id}`);
   };
   return (
     <>

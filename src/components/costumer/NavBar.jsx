@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link as ScrollLink } from "react-scroll";
 import { AiOutlineClose, AiOutlineMenu } from "react-icons/ai";
 import { useNavigate } from "react-router";
@@ -10,14 +10,27 @@ import { signOut } from "firebase/auth";
 import { useTheme } from "../../contexts/ThemeContext";
 import { ThemeSelector } from "../UI/ThemeToggle";
 import { Link as RouterLink } from "react-router-dom";
+import { useAuth } from "../../hooks/useAuth";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchCart } from "../../store/features/cart/CartSlice";
 
 const Navbar = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [showCart, setShowCart] = useState(false);
-  const [cartItems] = useState([]);
   const { colors, glass, button } = useTheme();
+  const { user } = useAuth();
+  const dispatch = useDispatch();
+  const cartItems = useSelector((state) => state.cart.carts);
+  const userId = user?.uid;
 
   const navigate = useNavigate();
+
+  // Fetch cart when user is logged in
+  useEffect(() => {
+    if (userId) {
+      dispatch(fetchCart(userId));
+    }
+  }, [dispatch, userId]);
 
   const handleLogout = async () => {
      try {
@@ -27,7 +40,6 @@ const Navbar = () => {
          console.error("Error saat logout:", error);
        }
   };
-
   const calculateCartCount = () => {
     return cartItems.reduce((total, item) => total + item.quantity, 0);
   };
@@ -90,62 +102,71 @@ const Navbar = () => {
               Review
             </ScrollLink>
           </li>
-          <li>
-            <RouterLink 
-              to="/screenshot-demo"
-              className={`cursor-pointer hover:${colors.primary} transition-colors duration-200 font-medium px-3 py-2 rounded-lg hover:${colors.surfaceSecondary} flex items-center space-x-1`}
-            >
-              <span>📸</span>
-              <span>AI Demo</span>
-            </RouterLink>
-          </li>
-        </ul>
-
-         {/* Nav Icons */}
+       
+        </ul>         {/* Nav Icons */}
          <div className="flex items-center gap-5">
           {/* Theme Toggle */}
           <ThemeSelector variant="inline" size="sm" />
           
-          <Menu as="div" className="relative">
-            <Menu.Button className={`p-2 rounded-full ${button.ghost} transition-all duration-200 hover:scale-110`}>
-              <FaUser size={20} className={`${colors.text}`} />
-            </Menu.Button>
-            <Menu.Items className={`absolute right-0 mt-2 w-48 origin-top-right ${glass.background} ${glass.border} rounded-md shadow-lg py-1 backdrop-blur-lg z-50`}>
-              <Menu.Item>
-                {({ active }) => (
-                  <a
-                    href="#"
-                    className={`${
-                      active ? colors.surfaceSecondary : ""
-                    } block px-4 py-2 text-sm ${colors.text} transition-colors duration-200`}
-                  >
-                    Your Profile
-                  </a>
-                )}
-              </Menu.Item>
-              <Menu.Item>
-                {({ active }) => (
-                  <div
-                    onClick={handleLogout}
-                    className={`${
-                      active ? colors.surfaceSecondary : ""
-                    } block px-4 py-2 text-sm ${colors.text} cursor-pointer transition-colors duration-200`}
-                  >
-                    Logout
-                  </div>
-                )}
-              </Menu.Item>
-            </Menu.Items>
-          </Menu>
+          {/* User Authentication */}
+          {user ? (
+            <Menu as="div" className="relative">
+              <Menu.Button className={`p-2 rounded-full ${button.ghost} transition-all duration-200 hover:scale-110`}>
+                <FaUser size={20} className={`${colors.text}`} />
+              </Menu.Button>
+              <Menu.Items className={`absolute right-0 mt-2 w-48 origin-top-right ${glass.background} ${glass.border} rounded-md shadow-lg py-1 backdrop-blur-lg z-50`}>
+                <Menu.Item>
+                  {({ active }) => (
+                    <div
+                      className={`${
+                        active ? colors.surfaceSecondary : ""
+                      } block px-4 py-2 text-sm ${colors.text} transition-colors duration-200`}
+                    >
+                      {user.email}
+                    </div>
+                  )}
+                </Menu.Item>
+                <Menu.Item>
+                  {({ active }) => (
+                    <div
+                      onClick={handleLogout}
+                      className={`${
+                        active ? colors.surfaceSecondary : ""
+                      } block px-4 py-2 text-sm ${colors.text} cursor-pointer transition-colors duration-200`}
+                    >
+                      Logout
+                    </div>
+                  )}
+                </Menu.Item>
+              </Menu.Items>
+            </Menu>
+          ) : (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/signin')}
+                className={`px-4 py-2 text-sm ${button.secondary} rounded-lg transition-all duration-200`}
+              >
+                Login
+              </button>
+              <button
+                onClick={() => navigate('/signup')}
+                className={`px-4 py-2 text-sm ${button.primary} rounded-lg transition-all duration-200`}
+              >
+                Sign Up
+              </button>
+            </div>          )}
 
-          <div className={`${colors.text} relative p-2 rounded-full ${button.ghost} transition-all duration-200 hover:scale-110`} onClick={() => setShowCart(!showCart)}>
-            <FaShoppingCart size={20} className="cursor-pointer" />
-            {cartItems.length > 0 && (
-              <div className="absolute top-[-5px] right-[-5px] bg-red-500 w-[20px] h-[20px] rounded-full text-white text-xs grid place-items-center animate-pulse">
-                {calculateCartCount()}
-              </div>
-            )}
-          </div>
+          {/* Shopping Cart - only show if user is logged in */}
+          {user && (
+            <div className={`${colors.text} relative p-2 rounded-full ${button.ghost} transition-all duration-200 hover:scale-110`} onClick={() => setShowCart(!showCart)}>
+              <FaShoppingCart size={20} className="cursor-pointer" />
+              {cartItems.length > 0 && (
+                <div className="absolute top-[-5px] right-[-5px] bg-red-500 w-[20px] h-[20px] rounded-full text-white text-xs grid place-items-center animate-pulse">
+                  {calculateCartCount()}
+                </div>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Hamburger Menu (Mobile) */}
@@ -201,23 +222,42 @@ const Navbar = () => {
                 onClick={() => setMenuOpen(false)}
               >
                 Review
-              </ScrollLink>
-              <RouterLink
-                to="/screenshot-demo"
-                className={`menu-item block py-3 px-4 ${colors.text} hover:${colors.surfaceSecondary} rounded-lg mx-4 transition-all duration-200 cursor-pointer`}
-                onClick={() => setMenuOpen(false)}
-              >
-                📸 AI Demo
-              </RouterLink>
-              <div
-                onClick={() => {
-                  handleLogout();
-                  setMenuOpen(false);
-                }}
-                className={`menu-item block py-3 px-4 ${colors.text} hover:${colors.surfaceSecondary} rounded-lg mx-4 transition-all duration-200 cursor-pointer`}
-              >
-                Logout
-              </div>
+              </ScrollLink>              
+              
+              {/* Authentication buttons for mobile */}
+              {user ? (
+                <>
+                  <div className={`menu-item block py-3 px-4 ${colors.textMuted} rounded-lg mx-4`}>
+                    {user.email}
+                  </div>
+                  <div
+                    onClick={() => {
+                      handleLogout();
+                      setMenuOpen(false);
+                    }}
+                    className={`menu-item block py-3 px-4 ${colors.text} hover:${colors.surfaceSecondary} rounded-lg mx-4 transition-all duration-200 cursor-pointer`}
+                  >
+                    Logout
+                  </div>
+                </>
+              ) : (
+                <>
+                  <RouterLink
+                    to="/signin"
+                    className={`menu-item block py-3 px-4 ${colors.text} hover:${colors.surfaceSecondary} rounded-lg mx-4 transition-all duration-200 cursor-pointer`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Login
+                  </RouterLink>
+                  <RouterLink
+                    to="/signup"
+                    className={`menu-item block py-3 px-4 ${colors.text} hover:${colors.surfaceSecondary} rounded-lg mx-4 transition-all duration-200 cursor-pointer`}
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Sign Up
+                  </RouterLink>
+                </>
+              )}
             </li>
           </ul>
         </div>

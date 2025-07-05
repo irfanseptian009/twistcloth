@@ -8,7 +8,7 @@ import { toast } from "react-toastify";
 import { AiOutlineShopping } from "react-icons/ai";
 import { FaGoogle, FaGithub } from "react-icons/fa"; 
 import { useTheme } from "../contexts/ThemeContext";
-import { ThemeToggle } from "../components/UI/ThemeToggle";
+import { getRedirectPath } from "../utils/roleUtils";
 export default function SignIn() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -21,7 +21,13 @@ export default function SignIn() {
 
   useEffect(() => {
     if (user) {
-      navigate("/home");
+      // Redirect berdasarkan role user
+      const redirectPath = getRedirectPath(user.role);
+      navigate(redirectPath);
+      
+      // Show welcome message with role info
+      const roleText = user.role === 'admin' ? 'Admin' : 'Customer';
+      toast.success(`Selamat Datang, ${roleText}!`, { autoClose: 2000 });
     }
   }, [user, navigate]);
 
@@ -40,8 +46,9 @@ export default function SignIn() {
 
     dispatch(login({ email, password }))
       .unwrap()
-      .then(() => {
-        toast.success("Selamat Datang!", { autoClose: 2000 });
+      .then((userData) => {
+        // Success message akan ditampilkan di useEffect
+        console.log('Login successful:', userData);
       })
       .catch(() => {
         toast.error("Email atau password salah.");
@@ -80,24 +87,20 @@ export default function SignIn() {
   return (
     <>
       <div
-        className={`min-h-screen flex items-center justify-center ${colors.background} py-10 px-4 sm:px-6 lg:px-8 relative`}
+        className={`min-h-screen flex items-center justify-center  py-10 px-4 sm:px-6 lg:px-8 relative`}
         style={{
           backgroundImage: `url(${bg})`,
           backgroundSize: "cover",
           backgroundRepeat: "repeat-y",
         }}
       >
-        {/* Background overlay */}
-        <div className="absolute inset-0 bg-black/30 backdrop-blur-sm"></div>
+       
         
-        {/* Theme Toggle */}
-        <div className="absolute top-6 right-6 z-50">
-          <ThemeToggle variant="floating" />
-        </div>
+      
 
         <AiOutlineShopping className={`${glass.background} ${glass.border} h-32 w-32 rounded-full absolute top-6 p-4 shadow-2xl backdrop-blur-lg z-10 ${colors.primary}`} />
         
-        <div className={`max-w-md w-full space-y-8 p-8 ${glass.background} ${glass.border} rounded-2xl shadow-2xl mt-14 backdrop-blur-lg relative z-20`}>
+        <div className={`max-w-md w-full space-y-8 p-8 ${glass.background} ${glass.border} rounded-2xl shadow-2xl mt-14 backdrop-blur-lg  z-20`}>
           <div className="max-w-md w-full space-y-8">
             <div>
               <h2 className={`mt-6 text-center text-3xl font-extrabold ${colors.text}`}>
