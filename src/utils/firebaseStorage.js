@@ -1,38 +1,86 @@
 import { ref, uploadBytes, getDownloadURL, deleteObject } from "firebase/storage";
 import { storage } from "../config/firebase";
 
-// Upload file ke Firebase Storage
-export const uploadFile = async (file, folder = "products") => {
+// Upload file ke Firebase Storage dengan retry mechanism
+export const uploadFile = async (file, folder = "products", maxRetries = 3) => {
   if (!file) throw new Error("No file provided");
   
   // Buat nama file unik dengan timestamp
   const timestamp = Date.now();
-  const fileName = `${timestamp}_${file.name}`;
+  const fileName = `${timestamp}_${file.name.replace(/[^a-zA-Z0-9.-]/g, '_')}`;
   const storageRef = ref(storage, `${folder}/${fileName}`);
   
-  try {
-    const snapshot = await uploadBytes(storageRef, file);
-    const downloadURL = await getDownloadURL(snapshot.ref);
-    return downloadURL;
-  } catch (error) {
-    console.error("Error uploading file:", error);
-    throw error;
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      console.log(`Upload attempt ${attempt} for file: ${fileName}`);
+      
+      // Add metadata to help with CORS
+      const metadata = {
+        contentType: file.type,
+        customMetadata: {
+          'uploadedAt': new Date().toISOString(),
+          'originalName': file.name
+        }
+      };
+      
+      const snapshot = await uploadBytes(storageRef, file, metadata);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+      
+      console.log(`Upload successful on attempt ${attempt}`);
+      return downloadURL;
+    } catch (error) {
+      console.error(`Upload attempt ${attempt} failed:`, error);
+      lastError = error;
+      
+      // If it's a CORS error and not the last attempt, wait and retry
+      if (attempt < maxRetries && (
+        error.message.includes('CORS') || 
+        error.message.includes('ERR_FAILED') ||
+        error.code === 'storage/unknown'
+      )) {
+        console.log(`Retrying in ${attempt * 1000}ms...`);
+        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
+        continue;
+      }
+      
+      // If it's the last attempt or not a retryable error, throw
+      throw error;
+    }
   }
+  
+  throw lastError;
 };
 
-// Upload multiple files
+// Upload multiple files dengan sequential upload untuk menghindari CORS issues
 export const uploadMultipleFiles = async (files, folder = "products") => {
   if (!files || files.length === 0) return [];
   
-  const uploadPromises = Array.from(files).map(file => uploadFile(file, folder));
+  const downloadURLs = [];
+  const filesArray = Array.from(files);
   
-  try {
-    const downloadURLs = await Promise.all(uploadPromises);
-    return downloadURLs;
-  } catch (error) {
-    console.error("Error uploading multiple files:", error);
-    throw error;
+  console.log(`Starting upload of ${filesArray.length} files`);
+  
+  // Upload files sequentially to avoid overwhelming the server
+  for (let i = 0; i < filesArray.length; i++) {
+    try {
+      console.log(`Uploading file ${i + 1}/${filesArray.length}: ${filesArray[i].name}`);
+      const downloadURL = await uploadFile(filesArray[i], folder);
+      downloadURLs.push(downloadURL);
+      
+      // Small delay between uploads to prevent rate limiting
+      if (i < filesArray.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    } catch (error) {
+      console.error(`Error uploading file ${filesArray[i].name}:`, error);
+      throw new Error(`Failed to upload file: ${filesArray[i].name}. ${error.message}`);
+    }
   }
+  
+  console.log(`Successfully uploaded ${downloadURLs.length} files`);
+  return downloadURLs;
 };
 
 // Upload file 3D (GLB)
@@ -74,4 +122,77 @@ export const getFilePathFromURL = (url) => {
     console.error("Error extracting file path:", error);
     return null;
   }
+};
+
+// Alternative upload method with better CORS handling
+export const uploadFileWithFallback = async (file, folder = "product-images") => {
+  if (!file) throw new Error("No file provided");
+  
+  try {
+    // First, try the normal upload
+    return await uploadFile(file, folder);
+  } catch (error) {
+    console.error("Primary upload failed, trying alternative method:", error);
+    
+    // If CORS error, try with different approach
+    if (error.message.includes('CORS') || error.message.includes('ERR_FAILED')) {
+      try {
+        // Use a different folder structure that might have different CORS settings
+        const timestamp = Date.now();
+        const safeName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileName = `${timestamp}_${safeName}`;
+        
+        // Try uploading to root folder or different path
+        const storageRef = ref(storage, fileName);
+        
+        const metadata = {
+          contentType: file.type || 'application/octet-stream',
+          customMetadata: {
+            'originalFolder': folder,
+            'uploadedAt': new Date().toISOString()
+          }
+        };
+        
+        const snapshot = await uploadBytes(storageRef, file, metadata);
+        const downloadURL = await getDownloadURL(snapshot.ref);
+        
+        console.log("Alternative upload successful");
+        return downloadURL;
+      } catch (fallbackError) {
+        console.error("Fallback upload also failed:", fallbackError);
+        throw new Error(`Upload failed: ${fallbackError.message}. Please check your internet connection and try again.`);
+      }
+    }
+    
+    throw error;
+  }
+};
+
+// Enhanced multiple file upload with fallback
+export const uploadMultipleFilesWithFallback = async (files, folder = "product-images") => {
+  if (!files || files.length === 0) return [];
+  
+  const downloadURLs = [];
+  const filesArray = Array.from(files);
+  
+  console.log(`Starting enhanced upload of ${filesArray.length} files`);
+  
+  for (let i = 0; i < filesArray.length; i++) {
+    try {
+      console.log(`Uploading file ${i + 1}/${filesArray.length}: ${filesArray[i].name}`);
+      const downloadURL = await uploadFileWithFallback(filesArray[i], folder);
+      downloadURLs.push(downloadURL);
+      
+      // Delay between uploads
+      if (i < filesArray.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+    } catch (error) {
+      console.error(`Error uploading file ${filesArray[i].name}:`, error);
+      throw new Error(`Failed to upload file: ${filesArray[i].name}. ${error.message}`);
+    }
+  }
+  
+  console.log(`Successfully uploaded ${downloadURLs.length} files with enhanced method`);
+  return downloadURLs;
 };

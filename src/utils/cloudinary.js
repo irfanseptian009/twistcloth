@@ -4,53 +4,136 @@ const CLOUDINARY_URL_IMAGE = 'https://api.cloudinary.com/v1_1/duk8twato/image/up
 const CLOUDINARY_URL_AUTO = 'https://api.cloudinary.com/v1_1/duk8twato/auto/upload';
 const UPLOAD_PRESET = 'e7fdrxuf'; 
 
-export const uploadImage = async (imageFile) => {
+export const uploadImage = async (imageFile, maxRetries = 3) => {
   if (!imageFile) {
     throw new Error("No image file provided for upload.");
   }
 
-  const formData = new FormData();
-  formData.append('file', imageFile);
-  formData.append('upload_preset', UPLOAD_PRESET);
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const formData = new FormData();
+    formData.append('file', imageFile);
+    formData.append('upload_preset', UPLOAD_PRESET);
 
-  console.log("Uploading image:", imageFile.name);
+    console.log(`Uploading image (attempt ${attempt}/${maxRetries}): ${imageFile.name}`);
 
-  try {
-    const response = await axios.post(CLOUDINARY_URL_IMAGE, formData);
-    console.log("Upload successful:", response.data);
-    return response.data.secure_url;
-  } catch (error) {
-    console.error("Error uploading image to Cloudinary:", error);
-    if (error.response) {
-      console.error("Status:", error.response.status);
-      console.error("Data:", error.response.data);
+    try {
+      const response = await axios.post(CLOUDINARY_URL_IMAGE, formData, {
+        timeout: 30000, // 30 second timeout
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      console.log(`Upload successful on attempt ${attempt}:`, response.data.secure_url);
+      return response.data.secure_url;
+    } catch (error) {
+      console.error(`Upload attempt ${attempt} failed:`, error);
+      lastError = error;
+      
+      // If not the last attempt, wait and retry
+      if (attempt < maxRetries) {
+        const delay = attempt * 1000; // Exponential backoff
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      // Enhanced error reporting
+      if (error.response) {
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
+        throw new Error(`Upload failed: ${error.response.data?.error?.message || error.response.statusText}`);
+      } else if (error.request) {
+        throw new Error("Network error: No response received from Cloudinary");
+      } else {
+        throw new Error(`Upload error: ${error.message}`);
+      }
     }
-    throw error;
   }
+  
+  throw lastError;
 };
 
-export const uploadFileCloudinary = async (file) => {
+export const uploadFileCloudinary = async (file, maxRetries = 3) => {
   if (!file) {
     throw new Error("No file provided for upload.");
   }
 
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', UPLOAD_PRESET);
+  let lastError;
+  
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
 
-  try {
-    const response = await axios.post(CLOUDINARY_URL_AUTO, formData);
-    return response.data.secure_url;
-  } catch (error) {
-    console.error("Error uploading file to Cloudinary:", error);
-    throw error;
+    console.log(`Uploading file (attempt ${attempt}/${maxRetries}): ${file.name}`);
+
+    try {
+      const response = await axios.post(CLOUDINARY_URL_AUTO, formData, {
+        timeout: 60000, // 60 second timeout for larger files
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
+      });
+      
+      console.log(`File upload successful on attempt ${attempt}:`, response.data.secure_url);
+      return response.data.secure_url;
+    } catch (error) {
+      console.error(`File upload attempt ${attempt} failed:`, error);
+      lastError = error;
+      
+      // If not the last attempt, wait and retry
+      if (attempt < maxRetries) {
+        const delay = attempt * 2000; // Longer delay for file uploads
+        console.log(`Retrying in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+        continue;
+      }
+      
+      // Enhanced error reporting
+      if (error.response) {
+        console.error("Response status:", error.response.status);
+        console.error("Response data:", error.response.data);
+        throw new Error(`File upload failed: ${error.response.data?.error?.message || error.response.statusText}`);
+      } else if (error.request) {
+        throw new Error("Network error: No response received from Cloudinary");
+      } else {
+        throw new Error(`File upload error: ${error.message}`);
+      }
+    }
   }
+  
+  throw lastError;
 };
 
 export const uploadMultipleImagesCloudinary = async (files) => {
   if (!files || files.length === 0) return [];
-  const uploadPromises = Array.from(files).map(file => uploadImage(file));
-  return Promise.all(uploadPromises);
+  
+  console.log(`Starting upload of ${files.length} images to Cloudinary`);
+  
+  // Upload files sequentially to avoid overwhelming the server
+  const uploadedUrls = [];
+  
+  for (let i = 0; i < files.length; i++) {
+    try {
+      console.log(`Uploading image ${i + 1}/${files.length}: ${files[i].name}`);
+      const url = await uploadImage(files[i]);
+      uploadedUrls.push(url);
+      
+      // Small delay between uploads to prevent rate limiting
+      if (i < files.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    } catch (error) {
+      console.error(`Error uploading image ${files[i].name}:`, error);
+      throw new Error(`Failed to upload image: ${files[i].name}. ${error.message}`);
+    }
+  }
+  
+  console.log(`Successfully uploaded ${uploadedUrls.length} images to Cloudinary`);
+  return uploadedUrls;
 };
 
 export const uploadMultiple3DCloudinary = async (files) => {

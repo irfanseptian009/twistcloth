@@ -2,7 +2,7 @@
 export const storeConfig = {
   // WhatsApp configuration
   whatsapp: {
-    number: "6281234567890", // Ganti dengan nomor WhatsApp toko yang sebenarnya
+    number: "6281234567890", 
     message: {
       greeting: "Halo, saya ingin memesan produk berikut:",
       footer: "Mohon konfirmasi pesanan ini. Terima kasih! 🙏"

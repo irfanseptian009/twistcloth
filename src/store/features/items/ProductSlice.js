@@ -2,8 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { createAsyncThunk } from '@reduxjs/toolkit';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
-import { uploadImage, uploadFileCloudinary, deleteMultipleFilesFromCloudinary, queueFileForDeletion } from '../../../utils/cloudinary';
-import { uploadMultipleFiles } from '../../../utils/firebaseStorage';
+import { uploadImage, uploadFileCloudinary, uploadMultipleImagesCloudinary, deleteMultipleFilesFromCloudinary, queueFileForDeletion } from '../../../utils/cloudinary';
 
 // Thunks untuk operasi async
 export const fetchItems = createAsyncThunk('items/fetchItems', async () => {
@@ -36,7 +35,7 @@ export const addItem = createAsyncThunk('items/addItem', async (item) => {
       const imageUrls = item.additionalImages.filter(img => typeof img === 'string');
       
       if (imageFiles.length > 0) {
-        const uploadedUrls = await uploadMultipleFiles(imageFiles, 'product-images');
+        const uploadedUrls = await uploadMultipleImagesCloudinary(imageFiles);
         additionalImages = [...imageUrls, ...uploadedUrls];
       } else {
         additionalImages = imageUrls;
@@ -114,7 +113,7 @@ export const updateItem = createAsyncThunk('items/updateItem', async (item) => {
       const imageUrls = item.additionalImages.filter(img => typeof img === 'string');
       
       if (imageFiles.length > 0) {
-        const uploadedUrls = await uploadMultipleFiles(imageFiles, 'product-images');
+        const uploadedUrls = await uploadMultipleImagesCloudinary(imageFiles);
         additionalImages = [...imageUrls, ...uploadedUrls];
       } else {
         additionalImages = imageUrls;

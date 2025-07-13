@@ -31,7 +31,7 @@ Jika ingin menambah email admin lain:
 export const DEFAULT_ADMIN_EMAILS = [
   'admin@darknessmerch.com',
   'admin@gmail.com',
-  'your-email@domain.com',  // <- Tambahkan di sini
+  'your-email@domain.com',  
 ];
 ```
 
