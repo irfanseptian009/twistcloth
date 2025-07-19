@@ -36,19 +36,19 @@ const ThreeDViewerWithRef = forwardRef(({
     // Camera setup
     const camera = new THREE.PerspectiveCamera(
       750,
-      isFullscreen ? window.innerWidth / window.innerHeight : 400 / 320,
+      isFullscreen ? window.innerWidth / window.innerHeight : 700 / 700,
       0.1,
-      1000
+      6000
     );
     camera.position.set(0, 0, 5);
-    cameraRef.current = camera;    // Renderer setup
+    cameraRef.current = camera;   
     const renderer = new THREE.WebGLRenderer({ 
       antialias: true,
       preserveDrawingBuffer: true // Important for screenshots
     });
     renderer.setSize(
-      isFullscreen ? window.innerWidth : 450,
-      isFullscreen ? window.innerHeight : 420
+      isFullscreen ? window.innerWidth : 550,
+      isFullscreen ? window.innerHeight : 520
     );
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = THREE.PCFSoftShadowMap;
@@ -96,30 +96,7 @@ const ThreeDViewerWithRef = forwardRef(({
           if (child.isMesh) {
             child.castShadow = true;
             child.receiveShadow = true;
-              // Apply selected color to mesh material
-            if (child.material) {
-              const color = new THREE.Color(selectedColor);
-              
-              // Clone material to avoid affecting other instances
-              child.material = child.material.clone();
-              
-              // Apply color based on material type
-              if (child.material.isMeshStandardMaterial || child.material.isMeshPhongMaterial) {
-                // For standard/phong materials, set the color property
-                child.material.color.setHex(color.getHex());
-                
-                // If there's a texture, blend it with the color
-                if (child.material.map) {
-                  child.material.color.multiplyScalar(0.8); // Reduce intensity for better blending
-                }
-              } else if (child.material.isMeshBasicMaterial) {
-                // For basic materials, directly set color
-                child.material.color.setHex(color.getHex());
-              }
-              
-              // Force material update
-              child.material.needsUpdate = true;
-            }
+            // Tidak mengubah warna material, biarkan warna asli model
           }
         });
         
@@ -225,35 +202,29 @@ const ThreeDViewerWithRef = forwardRef(({
     };
   }, [isRotating, isFullscreen, modelUrl, selectedColor]);
   // Effect to update model color when selectedColor changes
-  useEffect(() => {
-    if (modelRef.current && selectedColor) {
-      modelRef.current.traverse((child) => {
-        if (child.isMesh && child.material) {
-          const color = new THREE.Color(selectedColor);
-          
-          // Clone material if not already cloned to avoid affecting other instances
-          if (!child.material.isCloned) {
-            child.material = child.material.clone();
-            child.material.isCloned = true;
-          }
-          
-          // Apply color based on material type
-          if (child.material.isMeshStandardMaterial || child.material.isMeshPhongMaterial) {
-            child.material.color.setHex(color.getHex());
-            
-            // If there's a texture, blend it with the color
-            if (child.material.map) {
-              child.material.color.multiplyScalar(0.8);
-            }
-          } else if (child.material.isMeshBasicMaterial) {
-            child.material.color.setHex(color.getHex());
-          }
-          
-          child.material.needsUpdate = true;
-        }
-      });
-    }
-  }, [selectedColor]);
+  // Dihapus agar warna model tidak diubah
+  // useEffect(() => {
+  //   if (modelRef.current && selectedColor) {
+  //     modelRef.current.traverse((child) => {
+  //       if (child.isMesh && child.material) {
+  //         const color = new THREE.Color(selectedColor);
+  //         if (!child.material.isCloned) {
+  //           child.material = child.material.clone();
+  //           child.material.isCloned = true;
+  //         }
+  //         if (child.material.isMeshStandardMaterial || child.material.isMeshPhongMaterial) {
+  //           child.material.color.setHex(color.getHex());
+  //           if (child.material.map) {
+  //             child.material.color.multiplyScalar(0.8);
+  //           }
+  //         } else if (child.material.isMeshBasicMaterial) {
+  //           child.material.color.setHex(color.getHex());
+  //         }
+  //         child.material.needsUpdate = true;
+  //       }
+  //     });
+  //   }
+  // }, [selectedColor]);
 
   // Handle zoom in
   useEffect(() => {

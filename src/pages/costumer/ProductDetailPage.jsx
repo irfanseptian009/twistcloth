@@ -271,11 +271,10 @@ Tolong jawab dengan ringkas dan jelas.
                
               {show3D && (!product.iframeUrl && (product.model3D || (product.model3DVariants && product.model3DVariants.length > 0))) && (
                 <div className="relative rounded-2xl overflow-hidden">
-                  <div>
-                    <Simple3DViewer
-                      ref={canvasRef}
-                      isRotating={isRotating}
-                      isFullscreen={isFullscreen}
+                  <Simple3DViewer
+                    ref={canvasRef}
+                    isRotating={isRotating}
+                    isFullscreen={isFullscreen}
                     setIsFullscreen={setIsFullscreen}
                     zoomInTrigger={zoomInTrigger}
                     zoomOutTrigger={zoomOutTrigger}
@@ -291,20 +290,6 @@ Tolong jawab dengan ringkas dan jelas.
                         : '#000000'
                     }
                   />
-                    {/* 3D Toggle Button */}
-              <div className="w-full  flex justify-center mt-5 mb-3  gap-3">
-                <button
-                  onClick={() => setShow3D(!show3D)}
-                  className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 ${
-                    show3D ? 'text-purple-500 ring-2 ring-purple-500' : colors.text
-                  }`}
-                >
-                  <FiBox className="w-3 h-3" />
-                  <span>{show3D ? 'Hide 3D Model' : 'Show 3D Model'}</span>
-                </button>
-              </div>
-                  </div>
-                  
                   {/* 3D Controls - Liquid Glass Style */}
                   <div className={`absolute ${isFullscreen ? 'top-10 right-4' : 'bottom-28 right-4'} flex flex-col space-y-2`}>
                     {[
@@ -323,12 +308,10 @@ Tolong jawab dengan ringkas dan jelas.
                         <ctrl.icon className={`${ctrl.active ? 'text-purple-500 animate-spin' : colors.textSecondary} group-hover:scale-110 transition-transform`} />
                       </button>
                     ))}
-                    
                   </div>
-                 
                 </div>
-                
-              )}              {/* Fallback when no 3D model or 3D is hidden */}
+              )}
+              {/* Fallback when no 3D model or 3D is hidden */}
               {(!show3D || (!product.model3D && (!product.model3DVariants || product.model3DVariants.length === 0))) && (
                 <ImageGallery
                   mainImage={product.image}
@@ -336,6 +319,26 @@ Tolong jawab dengan ringkas dan jelas.
                   productName={product.name}
                 />
               )}
+              {/* 3D Toggle Button always visible below viewer or gallery */}
+              <div className="w-full flex justify-center mt-5 mb-3 gap-3">
+                {!show3D ? (
+                  <button
+                    onClick={() => setShow3D(true)}
+                    className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 ${colors.text}`}
+                  >
+                    <FiBox className="w-3 h-3" />
+                    <span>Show 3D Model</span>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => setShow3D(false)}
+                    className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 text-purple-500 ring-2 ring-purple-500`}
+                  >
+                    <FiBox className="w-3 h-3" />
+                    <span>Hide 3D Model</span>
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Product Info Section */}

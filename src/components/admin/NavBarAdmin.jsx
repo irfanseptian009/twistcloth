@@ -34,7 +34,7 @@ const NavBarAdmin = () => {
               <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center mr-3">
                 <span className="text-white font-bold text-lg">T</span>
               </div>
-              <span className="text-xl font-bold text-gray-900">Twist&Cloth</span>
+              <span className="text-xl font-bold text-gray-900">DarknessMerch</span>
               <span className="ml-2 px-2 py-1 text-xs font-medium text-indigo-600 bg-indigo-100 rounded-full">
                 Admin
               </span>
@@ -71,7 +71,7 @@ const NavBarAdmin = () => {
                 </div>
                 <div className="hidden lg:flex flex-col items-start">
                   <span className="text-sm font-medium">Admin User</span>
-                  <span className="text-xs text-gray-500">admin@twistcloth.com</span>
+                  <span className="text-xs text-gray-500">admin@darknessmerch.com</span>
                 </div>
               </button>
 
@@ -136,7 +136,7 @@ const NavBarAdmin = () => {
                   </div>
                   <div>
                     <div className="text-sm font-medium text-gray-900">Admin User</div>
-                    <div className="text-xs text-gray-500">admin@twistcloth.com</div>
+                    <div className="text-xs text-gray-500">admin@darknessmerch.com</div>
                   </div>
                 </div>
               </div>
