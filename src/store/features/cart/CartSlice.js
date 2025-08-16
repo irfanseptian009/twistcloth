@@ -1,23 +1,27 @@
+
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { collection, getDocs, addDoc, updateDoc, deleteDoc, doc } from 'firebase/firestore';
 import { db } from '../../../config/firebase';
-// import { uploadImage } from '../../../utils/cloudinary';
+
 // Thunks untuk operasi async
 
 // Fetch Cart Items
-export const fetchCart = createAsyncThunk('cart/fetchCart', async (userId, { rejectWithValue }) => {
-  try {
-    const cartCollection = collection(db, 'carts', userId, 'items');
-    const querySnapshot = await getDocs(cartCollection);
-    const cartItems = [];
-    querySnapshot.forEach((doc) => {
-      cartItems.push({ id: doc.id, ...doc.data() });
-    });
-    return cartItems;
-  } catch (error) {
-    return rejectWithValue(error.message);
+export const fetchCart = createAsyncThunk(
+  'cart/fetchCart',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const cartCollection = collection(db, 'carts', userId, 'items');
+      const querySnapshot = await getDocs(cartCollection);
+      const cartItems = [];
+      querySnapshot.forEach((doc) => {
+        cartItems.push({ id: doc.id, ...doc.data() });
+      });
+      return cartItems;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
   }
-});
+);
 
 // Add Item to Cart
 export const addToCart = createAsyncThunk(
@@ -30,9 +34,15 @@ export const addToCart = createAsyncThunk(
         throw new Error("Data cart tidak lengkap.");
       }
 
-      console.log("Menambahkan ke cart:", item);
-
+      // Memeriksa apakah item sudah ada di cart
       const cartCollection = collection(db, 'carts', userId, 'items');
+      const querySnapshot = await getDocs(cartCollection);
+      const isItemInCart = querySnapshot.docs.some(doc => doc.data().productId === productId);
+
+      if (isItemInCart) {
+        throw new Error("Produk sudah ada di keranjang.");
+      }
+
       const docRef = await addDoc(cartCollection, {
         productId,
         name,
@@ -48,28 +58,53 @@ export const addToCart = createAsyncThunk(
   }
 );
 
-
 // Remove Item from Cart
-export const removeFromCart = createAsyncThunk('cart/removeFromCart', async ({ userId, itemId }, { rejectWithValue }) => {
-  try {
-    const itemDoc = doc(db, 'carts', userId, 'items', itemId);
-    await deleteDoc(itemDoc);
-    return itemId;
-  } catch (error) {
-    return rejectWithValue(error.message);
+export const removeFromCart = createAsyncThunk(
+  'cart/removeFromCart',
+  async ({ userId, itemId }, { rejectWithValue }) => {
+    try {
+      const itemDoc = doc(db, 'carts', userId, 'items', itemId);
+      await deleteDoc(itemDoc);
+      return itemId;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
   }
-});
+);
 
 // Update Cart Item Quantity
-export const updateCartItem = createAsyncThunk('cart/updateCartItem', async ({ userId, itemId, quantity }, { rejectWithValue }) => {
-  try {
-    const itemDoc = doc(db, 'carts', userId, 'items', itemId);
-    await updateDoc(itemDoc, { quantity });
-    return { id: itemId, quantity };
-  } catch (error) {
-    return rejectWithValue(error.message);
+export const updateCartItem = createAsyncThunk(
+  'cart/updateCartItem',
+  async ({ userId, itemId, quantity }, { rejectWithValue }) => {
+    try {
+      const itemDoc = doc(db, 'carts', userId, 'items', itemId);
+      await updateDoc(itemDoc, { quantity });
+      return { id: itemId, quantity };
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
   }
-});
+);
+
+// Clear Cart
+export const clearCart = createAsyncThunk(
+  'cart/clearCart',
+  async (userId, { rejectWithValue }) => {
+    try {
+      const cartCollection = collection(db, 'carts', userId, 'items');
+      const querySnapshot = await getDocs(cartCollection);
+      
+      const deletePromises = querySnapshot.docs.map(doc => 
+        deleteDoc(doc.ref)
+      );
+      
+      await Promise.all(deletePromises);
+      return userId;
+    } catch (error) {
+      return rejectWithValue(error.message);
+    }
+  }
+);
 
 const cartSlice = createSlice({
   name: 'cart',
@@ -96,17 +131,24 @@ const cartSlice = createSlice({
       // Add to Cart
       .addCase(addToCart.fulfilled, (state, action) => {
         state.carts.push(action.payload);
+        state.error = null; // Reset error on success
+      })
+      .addCase(addToCart.rejected, (state, action) => {
+        state.error = action.payload;
       })
       // Remove from Cart
       .addCase(removeFromCart.fulfilled, (state, action) => {
         state.carts = state.carts.filter(item => item.id !== action.payload);
-      })
-      // Update Cart Item
+      })      // Update Cart Item
       .addCase(updateCartItem.fulfilled, (state, action) => {
         const index = state.carts.findIndex(item => item.id === action.payload.id);
         if (index !== -1) {
           state.carts[index].quantity = action.payload.quantity;
         }
+      })
+      // Clear Cart
+      .addCase(clearCart.fulfilled, (state) => {
+        state.carts = [];
       });
   },
 });

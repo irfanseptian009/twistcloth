@@ -6,9 +6,10 @@ import BestSellerCard from "../../components/costumer/BestSellerCard";
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect } from "react";
 import { fetchItems } from "../../store/features/items/ProductSlice";
+import { useTheme } from "../../contexts/ThemeContext";
 
 const Shop = () => {
-
+const { colors } = useTheme();
 const items = useSelector((state) => state.items.items);
 const dispatch = useDispatch();
 
@@ -57,18 +58,20 @@ useEffect(() => {
       },
     ],
   };
-
   return (
-    <div className=" min-h-screen flex flex-col justify-center lg:px-32 px-10 pt-14">
+    <div className={`min-h-screen flex flex-col justify-center lg:px-32 px-10 pt-14 ${colors.background}`}>
       {/* heading section */}
-      <div>
-        <h1 className=" font-semibold text-4xl text-center text-ExtraDarkColor">
-          Best sellers
+      <div className="text-center mb-8">
+        <h1 className={`font-bold text-4xl ${colors.text} mb-4`}>
+          Best Sellers
         </h1>
+        <p className={`text-lg ${colors.textMuted}`}>
+          Discover our most popular items
+        </p>
       </div>
 
       {/* carousel section */}
-      <div className=" mt-8">
+      <div className="mt-8">
         <Slider {...settings}>
           {items.map((item, idx) => (
             <BestSellerCard items={item} key={idx} />

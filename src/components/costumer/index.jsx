@@ -4,7 +4,9 @@ import Footer from "./Footer";
 import Navbar from "./NavBar";
 import ProductCard from "./ProductCard";
 import ReviewCard from "./ReviewCard";
-import ProductDetail from '../../pages/costumer/ProductDetail';
+import ProductDetailPage from '../../pages/costumer/ProductDetailPage';
 import CartProduct from "./CartProduct";
+import SkinToneDetector from "./SkinToneDetector";
+import StylistChatbot from "./StylistChatbot";
 
-export { Banner, BestSellerCard, Footer, Navbar, ProductCard, ReviewCard, ProductDetail, CartProduct };
+export { Banner, BestSellerCard, Footer, Navbar, ProductCard, ReviewCard, ProductDetailPage, CartProduct, SkinToneDetector, StylistChatbot };

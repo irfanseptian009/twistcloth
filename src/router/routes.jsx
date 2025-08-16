@@ -2,49 +2,57 @@
 import { createBrowserRouter } from "react-router";
 import SignUp from '../auth/SignUp';
 import SignIn  from "../auth/SignIn";
-import { HomeSeller, ListProduct} from "../pages";
-import ProtectedRoute from "./ProtectedRoute";
 import { MainLayout } from "../layout";
 import { MainLayoutCostumer } from "../layout/costumer";
-import { HomeCostumer, ProductDetail } from "../pages/costumer";
-import PrivateRoute from "./privateRoute";
+import { HomeCostumer, ProductDetailPage, DemoPage, CheckoutPage } from "../pages/costumer";
+import Admin from "../pages/admin/Admin";
+import ListProduct from "../pages/admin/ListProduct";
+import { AdminOnlyRoute, AuthenticatedRoute, RoleBasedRedirect } from "./RoleBasedRoute";
 
 const routes = createBrowserRouter([
-  { path: "/", element: <SignIn /> },
-  { path: "/SignUp", element: <SignUp /> },
-
-
-  // part untuk seller
-  {
-    path: "/seller",
-    element: <ProtectedRoute><MainLayout /></ProtectedRoute>,
+  // Redirect berdasarkan role jika user sudah login
+  { 
+    path: "/dashboard", 
+    element: <RoleBasedRedirect /> 
+  },
+  
+  // Public routes - tidak perlu login
+  { 
+    path: "/", 
+    element: <MainLayoutCostumer />,
     children: [
-     
-      { path: "", element: <HomeSeller /> }, 
+      { path: "", element: <HomeCostumer /> },
+      { path: "detail/:id", element: <ProductDetailPage/> },
+    ],
+  },
+  { path: "/signin", element: <SignIn /> },
+  { path: "/signup", element: <SignUp /> },
+  { path: "/demo", element: <DemoPage /> },
+
+  // Admin-only routes
+  {
+    path: "/admin",
+    element: <AdminOnlyRoute><MainLayout /></AdminOnlyRoute>,
+    children: [
+      { path: "", element: <Admin /> }, 
       { path: "products", element: <ListProduct /> },
     ],
-    
   },
 
-  // part untuk costumer
+  // Protected routes - memerlukan login (any role)
   {
-    path: "/home",
-    element: <PrivateRoute><MainLayoutCostumer /></PrivateRoute> ,
+    path: "/checkout",
+    element: <AuthenticatedRoute><MainLayoutCostumer /></AuthenticatedRoute>,
     children: [
-
-      { path: "", element: <HomeCostumer /> },
-      { path: "detail/:id", element: <ProductDetail/> },
-
+      { path: "", element: <CheckoutPage /> },
     ],
-    },
+  },
 
-      // Fallback for undefined routes
   {
     path: "*",
     element: <div>404 - Page Not Found</div>,
   },
-  ]
-  )
+]);
 
 
 export default routes;

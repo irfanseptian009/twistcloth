@@ -5,6 +5,9 @@ import { Link, useNavigate } from "react-router";
 import { PiNote } from "react-icons/pi";
 import bg from "../assets/authbg.jpg";
 import { Typography, Box, LinearProgress } from '@mui/material';
+import { toast } from 'react-toastify';
+import { useTheme } from "../contexts/ThemeContext";
+import { getRedirectPath } from "../utils/roleUtils";
 
 export default function SignUp() {
   const [email, setEmail] = useState(""); 
@@ -13,61 +16,75 @@ export default function SignUp() {
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const { colors, glass, button } = useTheme();
   
-  const { isAuthenticated, loading, error } = useSelector((state) => state.auth);
+  const { user, loading, error } = useSelector((state) => state.auth);
   const [successMessage, setSuccessMessage] = useState("");
   
   useEffect(() => {
-    if (isAuthenticated) {
-      navigate("/home");
+    if (user) {
+      // Redirect berdasarkan role user
+      const redirectPath = getRedirectPath(user.role);
+      navigate(redirectPath);
+      
+      // Show welcome message with role info
+      const roleText = user.role === 'admin' ? 'Admin' : 'Customer';
+      toast.success(`Pendaftaran berhasil! Selamat Datang, ${roleText}!`, { autoClose: 2000 });
     }
-  }, [isAuthenticated, navigate]);
+  }, [user, navigate]);
   
   const handleSubmit = (e) => {
     e.preventDefault();
-    
+  
     // Validasi input
     if (!email || !password || !confirmPassword) {
       alert("Harap isi semua field.");
       return;
     }
-    
+  
     if (password !== confirmPassword) {
       alert("Password tidak sama.");
       return;
     }
-    
+  
     dispatch(signup({ email, password }))
       .unwrap()
-      .then(() => {
+      .then((userData) => {
         setSuccessMessage("Pendaftaran berhasil!");
-        // Redirect atau tindakan lain setelah signup berhasil
+        // Success message akan ditampilkan di useEffect
+        console.log('Signup successful:', userData);
       })
       .catch(() => {
         setSuccessMessage("");
+        toast.error("Pendaftaran gagal!");
       });
   };
-  
-  return (
+    return (
     <div
-      className="min-h-screen flex items-center justify-center bg-gray-100 py-12 px-4 sm:px-6 lg:px-8"
+      className={`min-h-screen flex items-center justify-center ${colors.background} py-12 px-4 sm:px-6 lg:px-8 relative`}
       style={{
         backgroundImage: `url(${bg})`,
         backgroundSize: "cover",
         backgroundRepeat: "repeat-y",
       }}
     >
-      <PiNote className="bg-slate-50 h-32 w-32 rounded-full absolute mb-96 p-4 -mt-10 shadow-xl" />
-      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-2xl shadow-2xl">
+    
+
+      <PiNote className={`${glass.background} ${glass.border} h-32 w-32 rounded-full absolute mb-96 p-4 -mt-10 shadow-2xl backdrop-blur-lg z-10 ${colors.primary}`} />
+      
+      <div className={`max-w-md w-full space-y-8 p-8 ${glass.background} ${glass.border} rounded-2xl shadow-2xl backdrop-blur-lg relative z-20`}>
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className={`mt-6 text-center text-3xl font-extrabold ${colors.text}`}>
             Daftar Akun
           </h2>
+          <p className={`mt-2 text-center text-sm ${colors.textMuted}`}>
+            Buat akun baru untuk memulai berbelanja
+          </p>
         </div>
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          <div className="rounded-md shadow-sm -space-y-px">
+          <div className="space-y-4">
             <div>
-              <label htmlFor="email-address" className="sr-only">
+              <label htmlFor="email-address" className={`block text-sm font-medium ${colors.text} mb-2`}>
                 Alamat Email
               </label>
               <input
@@ -78,40 +95,40 @@ export default function SignUp() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="appearance-none bg-transparent rounded-lg mt-2 block relative w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Alamat Email"
+                className={`appearance-none ${glass.background} ${glass.border} rounded-lg block relative w-full px-4 py-3 placeholder-gray-400 ${colors.text} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm transition-all duration-200 backdrop-blur-lg`}
+                placeholder="contoh@email.com"
               />
             </div>
             <div>
-              <label htmlFor="password" className="sr-only">
+              <label htmlFor="password" className={`block text-sm font-medium ${colors.text} mb-2`}>
                 Password
               </label>
               <input
                 id="password"
                 name="password"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="appearance-none bg-transparent rounded-lg mt-2 relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Password"
+                className={`appearance-none ${glass.background} ${glass.border} rounded-lg block relative w-full px-4 py-3 placeholder-gray-400 ${colors.text} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm transition-all duration-200 backdrop-blur-lg`}
+                placeholder="Masukkan password"
               />
             </div>
             <div>
-              <label htmlFor="confirmPassword" className="sr-only">
+              <label htmlFor="confirmPassword" className={`block text-sm font-medium ${colors.text} mb-2`}>
                 Konfirmasi Password
               </label>
               <input
                 id="confirmPassword"
                 name="confirmPassword"
                 type="password"
-                autoComplete="current-password"
+                autoComplete="new-password"
                 required
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="appearance-none bg-transparent rounded-lg mt-2 relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Konfirmasi Password"
+                className={`appearance-none ${glass.background} ${glass.border} rounded-lg block relative w-full px-4 py-3 placeholder-gray-400 ${colors.text} focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent sm:text-sm transition-all duration-200 backdrop-blur-lg`}
+                placeholder="Konfirmasi password"
               />
             </div>
           </div>
@@ -123,31 +140,35 @@ export default function SignUp() {
           )}
 
           {error && (
-            <Typography className="text-red-500 text-sm text-center">
-              {error}
-            </Typography>
+            <div className="p-3 rounded-lg bg-red-500/20 border border-red-500/30">
+              <Typography className="text-red-400 text-sm text-center font-medium">
+                {error}
+              </Typography>
+            </div>
           )}
           
           {successMessage && (
-            <Typography className="text-green-500 text-sm text-center">
-              {successMessage}
-            </Typography>
+            <div className="p-3 rounded-lg bg-green-500/20 border border-green-500/30">
+              <Typography className="text-green-400 text-sm text-center font-medium">
+                {successMessage}
+              </Typography>
+            </div>
           )}
 
           <div>
             <button
               type="submit"
               disabled={loading}
-              className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-slate-800 hover:bg-blue-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+              className={`group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-bold rounded-lg ${button.primary} transition-all duration-200 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
             >
-              Daftar
+              {loading ? "Mendaftar..." : "Daftar"}
             </button>
           </div>
 
-          <div className="text-sm text-center">
+          <div className={`text-sm text-center ${colors.textMuted}`}>
             Sudah punya akun?{" "}
-            <Link to="/" className="font-medium text-indigo-600 hover:text-indigo-500">
-              Login
+            <Link to="/" className={`font-medium ${colors.primary} hover:underline transition-colors duration-200`}>
+              Login di sini
             </Link>
           </div>
         </form>

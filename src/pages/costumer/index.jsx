@@ -2,8 +2,10 @@ import HomeCostumer from "./HomeCostumer";
 import Collections from "./Collections";
 import Review from "./Review";
 import Shop from "./Shop";
-import ProductDetail from "./ProductDetail";
+import ProductDetailPage from "./ProductDetailPage";
+import DemoPage from "./DemoPage";
+import CheckoutPage from "./CheckoutPage";
 
 
 
-export {HomeCostumer,  Collections, Review, Shop, ProductDetail}
+export {HomeCostumer,  Collections, Review, Shop, ProductDetailPage, DemoPage, CheckoutPage}

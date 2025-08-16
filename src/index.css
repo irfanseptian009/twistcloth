@@ -6,8 +6,133 @@
 
 body {
     font-family: "Poppins", sans-serif;
+    transition: background-color 0.3s ease, color 0.3s ease;
   }
   
   .slick-slide > div {
     margin: 0px 10px;
+  }
+
+  .input {
+    @apply px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all;
+  }
+
+  /* Dark mode styles */
+  .dark .input {
+    @apply bg-gray-700 border-gray-600 text-white placeholder-gray-400 focus:ring-purple-500;
+  }
+
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-100 dark:bg-gray-800;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-400 dark:bg-gray-500;
+  }
+
+  /* Glass effect utilities */
+  .glass {
+    @apply backdrop-blur-xl bg-white/80 dark:bg-gray-800/80 border border-white/20 dark:border-gray-700/50;
+  }
+
+  .glass-strong {
+    @apply backdrop-blur-2xl bg-white/90 dark:bg-gray-800/90 border border-white/30 dark:border-gray-700/60;
+  }
+
+  /* Animated gradient background */
+  .animated-bg {
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+  }
+
+  .dark .animated-bg {
+    background: linear-gradient(-45deg, #1e1b4b, #581c87, #7c2d12, #166534);
+    background-size: 400% 400%;
+    animation: gradientBG 15s ease infinite;
+  }
+
+  @keyframes gradientBG {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Shimmer effect */
+  .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  .dark .shimmer {
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    background-size: 200% 100%;
+    animation: shimmer 2s ease-in-out infinite;
+  }
+
+  /* Glow effects */
+  .glow-purple {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  }
+
+  .dark .glow-purple {
+    box-shadow: 0 0 30px rgba(168, 85, 247, 0.5);
+  }
+
+  .glow-gray {
+    box-shadow: 0 0 20px rgba(236, 72, 153, 0.3);
+  }
+
+  .dark .glow-gray {
+    box-shadow: 0 0 30px rgba(236, 72, 153, 0.5);
+  }
+
+  /* Floating animation */
+  .float {
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0px); }
+    50% { transform: translateY(-10px); }
+  }
+
+  /* Dark mode transitions */
+  * {
+    transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
+  }
+
+  /* Custom button styles */
+  .btn-primary {
+    @apply bg-gradient-to-r from-gray-500 to-gray-500 hover:from-gray-500 hover:to-gray-600 text-white font-medium px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-xl;
+  }
+
+  .dark .btn-primary {
+    @apply from-gray-500 to-gray-600 hover:from-purple-700 hover:to-gray-700;
+  }
+
+  .btn-secondary {
+    @apply bg-white hover:bg-gray-50 text-gray-800 border border-gray-200 font-medium px-6 py-3 rounded-lg transition-all duration-300 transform hover:scale-105 shadow-md hover:shadow-lg;
+  }
+
+  .dark .btn-secondary {
+    @apply bg-gray-700 hover:bg-gray-600 text-white border-gray-600;
+  }
+
+  .btn-ghost {
+    @apply hover:bg-gray-100 text-gray-600 hover:text-gray-800 font-medium px-6 py-3 rounded-lg transition-all duration-300;
+  }
+
+  .dark .btn-ghost {
+    @apply hover:bg-gray-800 text-gray-300 hover:text-white;
   }

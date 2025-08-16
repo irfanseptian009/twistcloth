@@ -1,14 +1,18 @@
 
+import PropTypes from 'prop-types';
+import { useTheme } from "../../contexts/ThemeContext";
 
 const Modal = ({ isOpen, onClose, children }) => {
+  const { colors, glass } = useTheme();
+  
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-gray-500 bg-opacity-50 flex justify-center items-center z-50">
-      <div className="bg-white p-6 rounded-lg shadow-lg w-96 xl:w-auto relative">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex justify-center items-center z-50 animate-in fade-in duration-200">
+      <div className={`${glass.background} ${glass.border} ${colors.text} p-6 rounded-xl shadow-2xl w-96 xl:w-auto relative backdrop-blur-lg animate-in slide-in-from-bottom-4 duration-300`}>
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 text-gray-500 hover:text-gray-800"
+          className={`absolute top-3 right-3 ${colors.textMuted} hover:${colors.text} text-xl font-bold transition-colors duration-200 hover:scale-110 w-8 h-8 rounded-full flex items-center justify-center hover:bg-red-500/20`}
         >
           ×
         </button>
@@ -17,8 +21,6 @@ const Modal = ({ isOpen, onClose, children }) => {
     </div>
   );
 };
-
-import PropTypes from 'prop-types';
 
 Modal.propTypes = {
   isOpen: PropTypes.bool.isRequired,

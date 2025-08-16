@@ -3,12 +3,14 @@ import { Bars3Icon, BellIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { auth } from '../config/firebase'
 import { Navigate } from 'react-router'
 import { signOut } from 'firebase/auth'
+import { useTheme } from '../contexts/ThemeContext'
+import { ThemeToggle } from './UI/ThemeToggle'
 
 const navigation = [
   { name: 'Dashboard', href: '/seller', current: true },
   { name: 'Products', href: '/seller/products', current: false },
-  { name: 'Projects', href: '#', current: false },
-  { name: 'Calendar', href: '#', current: false },
+  { name: 'Werehouse', href: '#', current: false },
+  { name: 'Delivery', href: '#', current: false },
 ]
 
 function classNames(...classes) {
@@ -25,13 +27,15 @@ const handleLogout = async () => {
   }
 
 export default function Example() {
+  const { colors, glass, button } = useTheme();
+  
   return (
-    <Disclosure as="nav" className="bg-gray-800">
+    <Disclosure as="nav" className={`${colors.surface} ${glass.border} shadow-lg`}>
       <div className="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
         <div className="relative flex h-16 items-center justify-between">
           <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
             {/* Mobile menu button*/}
-            <DisclosureButton className="group relative inline-flex items-center justify-center rounded-md p-2 text-gray-400 hover:bg-gray-700 hover:text-white focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white">
+            <DisclosureButton className={`group relative inline-flex items-center justify-center rounded-md p-2 ${colors.textMuted} ${button.ghost}`}>
               <span className="absolute -inset-0.5" />
               <span className="sr-only">Open main menu</span>
               <Bars3Icon aria-hidden="true" className="block size-6 group-data-[open]:hidden" />
@@ -40,11 +44,9 @@ export default function Example() {
           </div>
           <div className="flex flex-1 items-center justify-center sm:items-stretch sm:justify-start">
             <div className="flex shrink-0 items-center">
-              <img
-                alt="Your Company"
-                src="https://tailwindui.com/plus/img/logos/mark.svg?color=indigo&shade=500"
-                className="h-8 w-auto"
-              />
+              <div className={`text-xl font-bold ${colors.text}`}>
+                      Darknessmerch
+                    </div>
             </div>
             <div className="hidden sm:ml-6 sm:block">
               <div className="flex space-x-4">
@@ -54,8 +56,10 @@ export default function Example() {
                     href={item.href}
                     aria-current={item.current ? 'page' : undefined}
                     className={classNames(
-                      item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                      'rounded-md px-3 py-2 text-sm font-medium',
+                      item.current 
+                        ? `${colors.primary} ${colors.text}` 
+                        : `${colors.textMuted} hover:${colors.surfaceSecondary} hover:${colors.text}`,
+                      'rounded-md px-3 py-2 text-sm font-medium transition-all duration-200',
                     )}
                   >
                     {item.name}
@@ -65,9 +69,14 @@ export default function Example() {
             </div>
           </div>
           <div className="absolute inset-y-0 right-0 flex items-center pr-2 sm:static sm:inset-auto sm:ml-6 sm:pr-0">
+            {/* Theme Toggle */}
+            <div className="mr-3">
+              <ThemeToggle variant="inline" size="sm" />
+            </div>
+            
             <button
               type="button"
-              className="relative rounded-full bg-gray-800 p-1 text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800"
+              className={`relative rounded-full ${colors.surface} p-1 ${colors.textMuted} hover:${colors.text} focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 transition-colors duration-200`}
             >
               <span className="absolute -inset-1.5" />
               <span className="sr-only">View notifications</span>
@@ -77,7 +86,7 @@ export default function Example() {
             {/* Profile dropdown */}
             <Menu as="div" className="relative ml-3">
               <div>
-                <MenuButton className="relative flex rounded-full bg-gray-800 text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800">
+                <MenuButton className={`relative flex rounded-full ${colors.surface} text-sm focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-gray-800 transition-all duration-200 hover:scale-105`}>
                   <span className="absolute -inset-1.5" />
                   <span className="sr-only">Open user menu</span>
                   <img
@@ -89,12 +98,12 @@ export default function Example() {
               </div>
               <MenuItems
                 transition
-                className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in"
+                className={`absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md ${glass.background} ${glass.border} py-1 shadow-lg ring-1 ring-black/5 transition focus:outline-none data-[closed]:scale-95 data-[closed]:transform data-[closed]:opacity-0 data-[enter]:duration-100 data-[leave]:duration-75 data-[enter]:ease-out data-[leave]:ease-in`}
               >
                 <MenuItem>
                   <a
                     href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                    className={`block px-4 py-2 text-sm ${colors.text} data-[focus]:${colors.surfaceSecondary} data-[focus]:outline-none transition-colors duration-200`}
                   >
                     Your Profile
                   </a>
@@ -102,7 +111,7 @@ export default function Example() {
                 <MenuItem>
                   <a
                     href="#"
-                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                    className={`block px-4 py-2 text-sm ${colors.text} data-[focus]:${colors.surfaceSecondary} data-[focus]:outline-none transition-colors duration-200`}
                   >
                     Settings
                   </a>
@@ -110,7 +119,7 @@ export default function Example() {
                 <MenuItem>
                   <button
                     onClick={handleLogout}
-                    className="block px-4 py-2 text-sm text-gray-700 data-[focus]:bg-gray-100 data-[focus]:outline-none"
+                    className={`block w-full text-left px-4 py-2 text-sm ${colors.text} data-[focus]:${colors.surfaceSecondary} data-[focus]:outline-none transition-colors duration-200`}
                   >
                     Sign out
                   </button>
@@ -130,8 +139,10 @@ export default function Example() {
               href={item.href}
               aria-current={item.current ? 'page' : undefined}
               className={classNames(
-                item.current ? 'bg-gray-900 text-white' : 'text-gray-300 hover:bg-gray-700 hover:text-white',
-                'block rounded-md px-3 py-2 text-base font-medium',
+                item.current 
+                  ? `${colors.primary} ${colors.text}` 
+                  : `${colors.textMuted} hover:${colors.surfaceSecondary} hover:${colors.text}`,
+                'block rounded-md px-3 py-2 text-base font-medium transition-all duration-200',
               )}
             >
               {item.name}

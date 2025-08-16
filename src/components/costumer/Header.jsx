@@ -1,35 +1,18 @@
-import { useDispatch } from 'react-redux';
-import { logout } from '../../store/auth/authSlice';
+
 import { useAuth } from '../../hooks/useAuth';
-import { Link, useNavigate } from 'react-router';
+import { useTheme } from '../../contexts/ThemeContext';
 
 export default function Header() {
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
   const { isAuthenticated, user } = useAuth();
-
-  const handleLogout = () => {
-    dispatch(logout())
-      .unwrap()
-      .then(() => {
-        navigate('/');
-      })
-      .catch((error) => {
-        console.error("Logout failed: ", error);
-      });
-  };
+  const { colors, glass } = useTheme();
 
   return (
-    <header className="flex justify-between p-4 bg-gray-800 text-white">
-      <Link to="/home" className="text-xl font-bold">
-        Toko Saya
-      </Link>
+    <header className={`flex justify-end p-4 ${glass.background} ${glass.border} ${colors.text} backdrop-blur-lg shadow-lg`}>
       {isAuthenticated && (
-        <div className="flex items-center space-x-4">
-          <span>Halo, {user.email}</span>
-          <button onClick={handleLogout} className="bg-red-500 px-3 py-1 rounded">
-            Logout
-          </button>
+        <div className="flex items-center text-sm space-x-4">
+          <div className={`px-3 py-2 rounded-full ${colors.surfaceSecondary} font-medium`}>
+            <span>Halo, {user.email}</span>
+          </div>
         </div>
       )}
     </header>
