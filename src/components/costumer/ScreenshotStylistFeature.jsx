@@ -39,35 +39,92 @@ const ScreenshotStylistFeature = ({
     { id: 'medium', label: 'Medium Quality', size: '1280x720' },
     { id: 'low', label: 'Low Quality', size: '640x480' }
   ];
-  // Capture canvas screenshot
-  const captureCanvas = useCallback(async () => {
+  // Helper function to capture any DOM element as image using html2canvas
+  const captureElementAsImage = useCallback(async (element) => {
+    try {
+      // Import html2canvas dynamically
+      const html2canvas = (await import('html2canvas')).default;
+      
+      const canvas = await html2canvas(element, {
+        allowTaint: true,
+        useCORS: true,
+        scrollX: 0,
+        scrollY: 0,
+        width: element.offsetWidth,
+        height: element.offsetHeight,
+        backgroundColor: '#ffffff',
+        scale: captureQuality === 'high' ? 2 : captureQuality === 'medium' ? 1.5 : 1,
+      });
+      
+      const dataURL = canvas.toDataURL('image/png', 1.0);
+      const size = Math.round((dataURL.length * 3) / 4);
+      
+      return {
+        dataURL,
+        size,
+        width: canvas.width,
+        height: canvas.height
+      };
+    } catch (error) {
+      console.error('Error with html2canvas:', error);
+      throw error;
+    }
+  }, [captureQuality]);
+
+  // Universal capture function for canvas, iframe, and images
+  const captureUniversal = useCallback(async () => {
     if (!canvasRef?.current) {
-      toast.error('Canvas tidak ditemukan!');
+      toast.error('Konten tidak ditemukan untuk di-capture!');
       return null;
     }
 
     setIsCapturing(true);
     
     try {
-      const result = await CanvasScreenshotUtil.captureCanvas(canvasRef, {
-        format: 'image/png',
-        quality: 1.0,
-        backgroundColor: '#ffffff'
-      });
+      let result = null;
+
+      // Check if canvasRef is an iframe
+      if (canvasRef.current.tagName === 'IFRAME') {
+        // For iframe, we'll capture the parent container
+        const container = canvasRef.current.parentElement;
+        if (container) {
+          result = await captureElementAsImage(container);
+        }
+      } 
+      // Check if canvasRef is a canvas
+      else if (canvasRef.current.tagName === 'CANVAS') {
+        result = await CanvasScreenshotUtil.captureCanvas(canvasRef, {
+          format: 'image/png',
+          quality: captureQuality === 'high' ? 1.0 : captureQuality === 'medium' ? 0.8 : 0.6,
+          backgroundColor: '#ffffff'
+        });
+      }
+      // For other elements (like image galleries)
+      else {
+        result = await captureElementAsImage(canvasRef.current);
+      }
       
-      setCapturedImage(result.dataURL);
-      setShowModal(true);
-      
-      toast.success(`Screenshot berhasil! (${CanvasScreenshotUtil.formatFileSize(result.size)}) 📸`);
-      return result.dataURL;
+      if (result) {
+        setCapturedImage(result.dataURL || result);
+        setShowModal(true);
+        toast.success(`Screenshot berhasil! 📸`);
+        return result.dataURL || result;
+      } else {
+        throw new Error('Gagal mengambil screenshot');
+      }
     } catch (error) {
-      console.error('Error capturing canvas:', error);
+      console.error('Error capturing content:', error);
       toast.error('Gagal mengambil screenshot');
       return null;
     } finally {
       setIsCapturing(false);
     }
-  }, [canvasRef]);
+  }, [canvasRef, captureQuality, captureElementAsImage]);
+
+  // Capture canvas screenshot (legacy function for backward compatibility)
+  const captureCanvas = useCallback(async () => {
+    return await captureUniversal();
+  }, [captureUniversal]);
 
   // Convert dataURL to base64 for API
   const dataURLToBase64 = (dataURL) => {
@@ -87,7 +144,7 @@ const ScreenshotStylistFeature = ({
       const base64Image = dataURLToBase64(capturedImage);
       
       const visualAnalysisPrompt = `
-Sebagai AI Stylist expert, analisis gambar outfit virtual ini dan berikan feedback professional:
+Sebagai AI Stylist expert, analisis gambar fashion ini dan berikan feedback professional:
 
 PRODUCT DATA:
 - Nama: "${product.name}"
@@ -99,32 +156,39 @@ USER DATA:
 - Warna kulit: ${userSkinTone ? `${userSkinTone.name} (${userSkinTone.description})` : 'Belum terdeteksi'}
 - Rekomendasi warna: ${userSkinTone ? userSkinTone.recommendations?.join(', ') : 'Analisis diperlukan'}
 
+JENIS ANALISIS: ${analysisType.toUpperCase()}
+QUALITY CAPTURE: ${captureQuality.toUpperCase()}
+
 ANALISIS VISUAL YANG DIBUTUHKAN:
-1. Kesesuaian warna outfit dengan skin tone
-2. Proporsi dan fit clothing pada model
-3. Overall styling dan aesthetic appeal
-4. Saran improvement atau alternative styling
-5. Aksesories yang bisa ditambahkan
-6. Occasion yang cocok untuk outfit ini
+${analysisType === 'comprehensive' ? 
+  `1. Kesesuaian warna outfit dengan skin tone\n2. Proporsi dan fit clothing pada model/visual\n3. Overall styling dan aesthetic appeal\n4. Material dan texture analysis\n5. Saran improvement atau alternative styling\n6. Aksesories yang bisa ditambahkan\n7. Occasion yang cocok untuk outfit ini\n8. Trend compatibility dan modern appeal` :
+  analysisType === 'color' ?
+  `1. Analisis color harmony dengan skin tone\n2. Color combination effectiveness\n3. Season color palette matching\n4. Color psychology impact\n5. Alternative color suggestions` :
+  analysisType === 'style' ?
+  `1. Fashion style identification\n2. Trend analysis dan modernity\n3. Style consistency\n4. Body shape flattering analysis\n5. Style improvement suggestions` :
+  `1. Event/occasion suitability\n2. Dress code compliance\n3. Setting appropriate analysis\n4. Seasonal appropriateness\n5. Alternative occasion suggestions`
+}
 
 INSTRUKSI:
-- Berikan analisis berdasarkan gambar yang dikirim
-- Gunakan bahasa yang friendly tapi professional
-- Maksimal 300 kata
+- Analisis berdasarkan gambar yang diterima (3D model, iframe, atau foto)
+- Gunakan bahasa Indonesia yang friendly tapi professional
+- Maksimal 350 kata
 - Sertakan emoji yang relevan
 - Berikan rating 1-10 untuk overall look
 - Akhiri dengan pertanyaan untuk engagement
+- Jika gambar blur atau tidak jelas, berikan saran umum berdasarkan product data
 
 Format response:
-📸 ANALISIS VISUAL OUTFIT
+📸 ANALISIS VISUAL OUTFIT - ${analysisTypes.find(t => t.id === analysisType)?.label.toUpperCase()}
 
-[Analisis detail berdasarkan gambar]
+[Analisis detail berdasarkan gambar dan jenis analisis yang dipilih]
 
 ⭐ RATING: [X]/10
 💡 SARAN: [Specific suggestions]
-🎯 COCOK UNTUK: [Occasions]
+🎯 COCOK UNTUK: [Occasions/situations]
+🎨 WARNA: [Color analysis if applicable]
 
-[Pertanyaan engagement]
+[Pertanyaan engagement untuk user]
       `.trim();
 
       const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
@@ -218,10 +282,10 @@ Format response:
             <HiSparkles className="text-4xl text-yellow-400 animate-pulse" />
           </div>
           <h3 className={`text-2xl font-bold ${colors.text} mb-2`}>
-            AI Visual Fashion Analysis
+            AI Universal Fashion Capture & Analysis
           </h3>
           <p className={`${colors.textMuted} text-lg`}>
-            Capture your outfit dan dapatkan analisis fashion AI yang mendalam
+            Capture 3D models, iframe, dan gambar untuk analisis fashion AI yang mendalam
           </p>
         </div>
 
@@ -313,6 +377,19 @@ Format response:
 
         {/* Main Action Button */}
         <div className="text-center">
+          {/* Content Type Indicator */}
+          <div className={`inline-flex items-center space-x-2 px-4 py-2 rounded-full ${glass.background} ${glass.border} mb-4 backdrop-blur-xl`}>
+            <MdPhotoCamera className="text-sm text-purple-500" />
+            <span className={`text-sm font-medium ${colors.text}`}>
+              {canvasRef?.current?.tagName === 'IFRAME' ? '3D Iframe Model' :
+               canvasRef?.current?.tagName === 'CANVAS' ? '3D Canvas Model' : 
+               'Gallery/Images'}
+            </span>
+            <span className={`text-xs px-2 py-1 rounded-full bg-purple-100 dark:bg-purple-900 text-purple-700 dark:text-purple-300`}>
+              Ready
+            </span>
+          </div>
+
           <button
             onClick={captureCanvas}
             disabled={isCapturing}
@@ -337,10 +414,15 @@ Format response:
                 <>
                   <BiScreenshot className="text-2xl group-hover:scale-110 transition-transform" />
                   <FaRobot className="text-xl group-hover:scale-110 transition-transform" />
-                  <span>Capture & Analyze</span>
+                  <span>AI Analysis</span>
                   <HiSparkles className="text-xl animate-pulse group-hover:scale-110 transition-transform" />
                 </>
               )}
+            </div>
+            
+            {/* Tooltip Info */}
+            <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-3 py-1 bg-black/80 text-white text-xs rounded-lg opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+              Capture canvas 3D, iframe, atau gambar untuk analisis AI
             </div>
           </button>
           
@@ -384,7 +466,7 @@ Format response:
                     <BiBot className="text-2xl" />
                   </div>
                   <div>
-                    <h3 className="font-bold text-2xl mb-1">AI Fashion Studio</h3>
+                    <h3 className="font-bold text-2xl mb-1">AI Fashion Darknesmerch</h3>
                     <p className="text-sm opacity-90 flex items-center">
                       <HiSparkles className="mr-1" />
                       Advanced Visual Analysis by AI Stylist

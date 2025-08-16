@@ -30,6 +30,7 @@ function ProductDetailPage() {
   const [stylistResponses, setStylistResponses] = useState([]);
   const [activeTab, setActiveTab] = useState(0);
   const canvasRef = useRef(null);
+  const imageGalleryRef = useRef(null); // For hidden ImageGallery when iframe is shown
   const { colors, glass, button } = useTheme();
 
   const [isRotating, setIsRotating] = useState(false);
@@ -212,7 +213,7 @@ Tolong jawab dengan ringkas dan jelas.
           }}
         >
           <div className="flex flex-col lg:flex-row">            {/* 3D Viewer Section */}
-            <div className="lg:w-1/2 flex flex-col items-center justify-center">              {/* 3D Models & Variants Selection */}
+            <div className="lg:w-1/2 flex flex-col items-center justify-center" ref={canvasRef}>              {/* 3D Models & Variants Selection */}
               {product.model3DVariants && product.model3DVariants.length > 0 && (
                 <div className="w-full mb-4">
                   {/* <h4 className={`font-semibold mb-3 ${colors.text} flex items-center`}>
@@ -244,7 +245,7 @@ Tolong jawab dengan ringkas dan jelas.
                 </div>
               )}          
               {show3D && product.iframeUrl && (
-                <div className="relative rounded-2xl  p-10 w-full overflow-hidden">
+                <div className="relative rounded-2xl p-10 w-full overflow-hidden">
                   <iframe
                     title="3D Model Viewer"
                     allow="autoplay; fullscreen; xr-spatial-tracking"
@@ -254,18 +255,15 @@ Tolong jawab dengan ringkas dan jelas.
                     style={{ border: 0, width: '100%', minHeight: 400, borderRadius: 16 }}
                     allowFullScreen
                   />
-                    {/* 3D Toggle Button */}
-              <div className="w-full  flex justify-center mt-5  gap-3">
-                <button
-                  onClick={() => setShow3D(!show3D)}
-                  className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 ${
-                    show3D ? 'text-purple-500 ring-2 ring-purple-500' : colors.text
-                  }`}
-                >
-                  <FiBox className="w-3 h-3" />
-                  <span>{show3D ? 'Hide 3D Model' : 'Show 3D Model'}</span>
-                </button>
-              </div>
+                  {/* Hidden image gallery for capture only */}
+                  <div style={{display: 'none'}}>
+                    <ImageGallery
+                      ref={imageGalleryRef}
+                      mainImage={product.image}
+                      additionalImages={product.additionalImages}
+                      productName={product.name}
+                    />
+                  </div>
                 </div>
               )}
                
@@ -314,6 +312,7 @@ Tolong jawab dengan ringkas dan jelas.
               {/* Fallback when no 3D model or 3D is hidden */}
               {(!show3D || (!product.model3D && (!product.model3DVariants || product.model3DVariants.length === 0))) && (
                 <ImageGallery
+                  ref={canvasRef}
                   mainImage={product.image}
                   additionalImages={product.additionalImages}
                   productName={product.name}
@@ -321,22 +320,24 @@ Tolong jawab dengan ringkas dan jelas.
               )}
               {/* 3D Toggle Button always visible below viewer or gallery */}
               <div className="w-full flex justify-center mt-5 mb-3 gap-3">
-                {!show3D ? (
-                  <button
-                    onClick={() => setShow3D(true)}
-                    className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 ${colors.text}`}
-                  >
-                    <FiBox className="w-3 h-3" />
-                    <span>Show 3D Model</span>
-                  </button>
-                ) : (
-                  <button
-                    onClick={() => setShow3D(false)}
-                    className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 text-purple-500 ring-2 ring-purple-500`}
-                  >
-                    <FiBox className="w-3 h-3" />
-                    <span>Hide 3D Model</span>
-                  </button>
+                {(product.iframeUrl || product.model3D || (product.model3DVariants && product.model3DVariants.length > 0)) && (
+                  !show3D ? (
+                    <button
+                      onClick={() => setShow3D(true)}
+                      className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 ${colors.text}`}
+                    >
+                      <FiBox className="w-3 h-3" />
+                      <span>Show 3D Model</span>
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setShow3D(false)}
+                      className={`px-6 py-3 ${glass.background} ${glass.border} rounded-xl backdrop-blur-xl hover:scale-105 transition-all duration-300 font-medium shadow-lg hover:shadow-xl flex items-center space-x-2 text-purple-500 ring-2 ring-purple-500`}
+                    >
+                      <FiBox className="w-3 h-3" />
+                      <span>Hide 3D Model</span>
+                    </button>
+                  )
                 )}
               </div>
             </div>
@@ -651,12 +652,15 @@ Tolong jawab dengan ringkas dan jelas.
               
               <div className="max-w-4xl mx-auto">
                 <ScreenshotStylistFeature
-                  canvasRef={canvasRef}
+                  canvasRef={
+                    show3D && product.iframeUrl
+                      ? imageGalleryRef
+                      : canvasRef
+                  }
                   product={product}
                   userSkinTone={userSkinTone}
                   onStylistResponse={handleStylistResponse}
                 />
-            
               </div>
             </div>
           )}
