@@ -16,47 +16,47 @@ const EnhancedSkinToneDetector = ({ onSkinToneDetected }) => {
   const canvasRef = useRef(null);
   const webcamRef = useRef(null);
 
-  // Enhanced skin tone categories with better color accuracy
+  // Enhanced skin tone categories with realistic color accuracy
   const skinToneCategories = {
     'very-light': { 
       name: 'Sangat Terang', 
-      hex: '#F7E7CE', 
+      hex: '#FDBCB4', 
       description: 'Kulit sangat terang dengan undertone pink atau neutral',
       recommendations: ['Warna pastel', 'Biru muda', 'Pink soft', 'Lavender']
     },
     'light': { 
       name: 'Terang', 
-      hex: '#F0D5A8', 
+      hex: '#EDC2A3', 
       description: 'Kulit terang dengan undertone warm atau cool',
       recommendations: ['Coral', 'Peach', 'Mint green', 'Soft yellow']
     },
     'light-medium': { 
       name: 'Terang Sedang', 
-      hex: '#E8C5A0', 
+      hex: '#D1A3A4', 
       description: 'Kulit terang sedang dengan undertone beragam',
       recommendations: ['Dusty rose', 'Sage green', 'Warm grey', 'Soft brown']
     },
     'medium': { 
       name: 'Sedang', 
-      hex: '#D4A574', 
+      hex: '#A77E58', 
       description: 'Kulit sedang dengan undertone warm atau olive',
       recommendations: ['Terracotta', 'Olive green', 'Burnt orange', 'Deep coral']
     },
     'medium-dark': { 
       name: 'Sedang Gelap', 
-      hex: '#C8956D', 
+      hex: '#8D5524', 
       description: 'Kulit sedang gelap dengan undertone warm',
       recommendations: ['Rich jewel tones', 'Emerald', 'Ruby red', 'Deep purple']
     },
     'dark': { 
       name: 'Gelap', 
-      hex: '#A67C5A', 
+      hex: '#714426', 
       description: 'Kulit gelap dengan undertone rich warm',
       recommendations: ['Bright colors', 'Fuchsia', 'Electric blue', 'Sunshine yellow']
     },
     'very-dark': { 
       name: 'Sangat Gelap', 
-      hex: '#8B4513', 
+      hex: '#3C2414', 
       description: 'Kulit sangat gelap dengan undertone deep warm',
       recommendations: ['Vibrant colors', 'Hot pink', 'Turquoise', 'Orange red']
     }
@@ -118,21 +118,54 @@ const EnhancedSkinToneDetector = ({ onSkinToneDetected }) => {
 
   const detectSkinToneAdvanced = (pixels, width, height) => {
     const skinPixels = [];
-    const centerX = Math.floor(width / 2);
-    const centerY = Math.floor(height / 2);
-    const radius = Math.min(width, height) / 6;
+    
+    // Multiple sampling areas for better accuracy
+    const samplingAreas = [
+      { centerX: width * 0.5, centerY: height * 0.4, radius: Math.min(width, height) / 8 }, // Face center
+      { centerX: width * 0.4, centerY: height * 0.45, radius: Math.min(width, height) / 12 }, // Left cheek
+      { centerX: width * 0.6, centerY: height * 0.45, radius: Math.min(width, height) / 12 }, // Right cheek
+      { centerX: width * 0.5, centerY: height * 0.35, radius: Math.min(width, height) / 15 }, // Forehead
+    ];
 
-    // Focus on center area where face is likely to be
-    for (let y = centerY - radius; y < centerY + radius; y++) {
-      for (let x = centerX - radius; x < centerX + radius; x++) {
-        if (x >= 0 && x < width && y >= 0 && y < height) {
-          const index = (y * width + x) * 4;
-          const r = pixels[index];
-          const g = pixels[index + 1];
-          const b = pixels[index + 2];
-          
-          if (isSkinPixelAdvanced(r, g, b)) {
-            skinPixels.push({ r, g, b });
+    for (const area of samplingAreas) {
+      const { centerX, centerY, radius } = area;
+      
+      for (let y = Math.max(0, centerY - radius); y < Math.min(height, centerY + radius); y++) {
+        for (let x = Math.max(0, centerX - radius); x < Math.min(width, centerX + radius); x++) {
+          // Check if pixel is within circular area
+          const dx = x - centerX;
+          const dy = y - centerY;
+          if (dx * dx + dy * dy <= radius * radius) {
+            const index = (Math.floor(y) * width + Math.floor(x)) * 4;
+            const r = pixels[index];
+            const g = pixels[index + 1];
+            const b = pixels[index + 2];
+            
+            if (isSkinPixelAdvanced(r, g, b)) {
+              skinPixels.push({ r, g, b });
+            }
+          }
+        }
+      }
+    }
+    
+    if (skinPixels.length < 10) {
+      // Fallback: sample more broadly if not enough skin pixels found
+      const centerX = Math.floor(width / 2);
+      const centerY = Math.floor(height / 2);
+      const radius = Math.min(width, height) / 4;
+
+      for (let y = centerY - radius; y < centerY + radius; y++) {
+        for (let x = centerX - radius; x < centerX + radius; x++) {
+          if (x >= 0 && x < width && y >= 0 && y < height) {
+            const index = (y * width + x) * 4;
+            const r = pixels[index];
+            const g = pixels[index + 1];
+            const b = pixels[index + 2];
+            
+            if (isSkinPixelAdvanced(r, g, b)) {
+              skinPixels.push({ r, g, b });
+            }
           }
         }
       }
@@ -141,37 +174,118 @@ const EnhancedSkinToneDetector = ({ onSkinToneDetected }) => {
     if (skinPixels.length === 0) {
       return skinToneCategories['medium']; // Default fallback
     }
+
+    // Sort and use median values for more accurate color representation
+    const sortedR = skinPixels.map(p => p.r).sort((a, b) => a - b);
+    const sortedG = skinPixels.map(p => p.g).sort((a, b) => a - b);
+    const sortedB = skinPixels.map(p => p.b).sort((a, b) => a - b);
     
-    // Calculate average skin color
+    const medianIndex = Math.floor(skinPixels.length / 2);
+    const medianR = sortedR[medianIndex];
+    const medianG = sortedG[medianIndex];
+    const medianB = sortedB[medianIndex];
+    
+    // Also calculate average for more stable results
     const avgR = Math.round(skinPixels.reduce((sum, p) => sum + p.r, 0) / skinPixels.length);
     const avgG = Math.round(skinPixels.reduce((sum, p) => sum + p.g, 0) / skinPixels.length);
     const avgB = Math.round(skinPixels.reduce((sum, p) => sum + p.b, 0) / skinPixels.length);
     
-    // Classify skin tone based on brightness and color values
-    return classifySkinToneAdvanced(avgR, avgG, avgB);
+    // Use weighted combination of median and average
+    const finalR = Math.round((medianR * 0.6) + (avgR * 0.4));
+    const finalG = Math.round((medianG * 0.6) + (avgG * 0.4));
+    const finalB = Math.round((medianB * 0.6) + (avgB * 0.4));
+    
+    // Return classification with actual detected color
+    const classification = classifySkinToneAdvanced(finalR, finalG, finalB);
+    
+    // Update the hex color to reflect actual detected skin tone
+    return {
+      ...classification,
+      hex: `rgb(${finalR}, ${finalG}, ${finalB})`,
+      actualRGB: { r: finalR, g: finalG, b: finalB },
+      confidence: skinPixels.length > 50 ? 'high' : skinPixels.length > 20 ? 'medium' : 'low'
+    };
   };
   const isSkinPixelAdvanced = (r, g, b) => {
-    // Enhanced skin detection algorithm
-    const rg = r - g;
+    // Enhanced skin detection algorithm using multiple criteria
     
-    return (
+    // Convert RGB to YCbCr for better skin detection
+    const y = 0.299 * r + 0.587 * g + 0.114 * b;
+    const cb = -0.169 * r - 0.331 * g + 0.5 * b + 128;
+    const cr = 0.5 * r - 0.419 * g - 0.081 * b + 128;
+    
+    // YCbCr-based skin detection (more accurate than RGB)
+    const skinCondition1 = cb >= 77 && cb <= 127 && cr >= 133 && cr <= 173;
+    
+    // RGB-based skin detection (enhanced)
+    const skinCondition2 = (
       r > 95 && g > 40 && b > 20 &&
       Math.max(r, g, b) - Math.min(r, g, b) > 15 &&
-      Math.abs(rg) > 15 && r > g && r > b &&
-      !(r > 220 && g > 210 && b > 170) // Exclude very bright/white areas
+      Math.abs(r - g) > 15 && r > g && r > b
     );
+    
+    // Additional skin tone specific checks
+    const rg = r - g;
+    const rb = r - b;
+    
+    const skinCondition3 = (
+      r > g && r > b && // Red dominance
+      rg > 15 && rb > 15 && // Sufficient red dominance
+      !(r > 220 && g > 210 && b > 170) && // Exclude very bright/white areas
+      !(r < 60 && g < 60 && b < 60) && // Exclude very dark areas
+      y > 50 && y < 230 // Reasonable brightness range
+    );
+    
+    // HSV-based additional check
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const delta = max - min;
+    
+    let hue = 0;
+    if (delta !== 0) {
+      if (max === r) {
+        hue = ((g - b) / delta) % 6;
+      } else if (max === g) {
+        hue = (b - r) / delta + 2;
+      } else {
+        hue = (r - g) / delta + 4;
+      }
+      hue = Math.round(hue * 60);
+      if (hue < 0) hue += 360;
+    }
+    
+    const saturation = max === 0 ? 0 : delta / max;
+    const value = max / 255;
+    
+    // Skin tone typically has hue between 0-50 degrees (red-orange-yellow range)
+    const hueCondition = (hue >= 0 && hue <= 50) || (hue >= 300 && hue <= 360);
+    const satCondition = saturation >= 0.15 && saturation <= 0.8;
+    const valCondition = value >= 0.2 && value <= 0.95;
+    
+    // Combine multiple conditions for robust detection
+    return (skinCondition1 || skinCondition2 || skinCondition3) && 
+           hueCondition && satCondition && valCondition;
   };
   const classifySkinToneAdvanced = (r, g, b) => {
-    // Calculate brightness
-    const brightness = (r * 0.299 + g * 0.587 + b * 0.114);
+    // Enhanced classification using multiple color space analysis
     
-    // Enhanced classification based on brightness
-    if (brightness > 200) return skinToneCategories['very-light'];
-    if (brightness > 180) return skinToneCategories['light'];
-    if (brightness > 160) return skinToneCategories['light-medium'];
-    if (brightness > 140) return skinToneCategories['medium'];
-    if (brightness > 120) return skinToneCategories['medium-dark'];
-    if (brightness > 100) return skinToneCategories['dark'];
+    // Calculate perceptual brightness (more accurate than simple luminance)
+    const brightness = Math.sqrt(0.299 * r * r + 0.587 * g * g + 0.114 * b * b);
+    
+    // Calculate ITA (Individual Typology Angle) for skin tone classification
+    // ITA is widely used in dermatology and cosmetics
+    const L = 116 * Math.pow((brightness / 255), 1/3) - 16;
+    const b_lab = 200 * (Math.pow((b / 255), 1/3) - Math.pow((g / 255), 1/3));
+    const ita = Math.atan(L / b_lab) * (180 / Math.PI);
+    
+    // Enhanced classification based on multiple factors
+    if (brightness > 180 && ita > 55) return skinToneCategories['very-light'];
+    if (brightness > 160 && ita > 41) return skinToneCategories['light'];
+    if (brightness > 140 && ita > 28) return skinToneCategories['light-medium'];
+    if (brightness > 120 && ita > 10) return skinToneCategories['medium'];
+    if (brightness > 100 && ita > -30) return skinToneCategories['medium-dark'];
+    if (brightness > 80) return skinToneCategories['dark'];
+    
     return skinToneCategories['very-dark'];
   };
   const clearImage = () => {
@@ -319,13 +433,30 @@ const EnhancedSkinToneDetector = ({ onSkinToneDetected }) => {
               🎯 Hasil Deteksi AI:
             </h4>
             <div className="flex items-center space-x-4 mb-3">
-              <div 
-                className="w-16 h-16 rounded-full border-4 border-white shadow-lg"
-                style={{ backgroundColor: detectedSkinTone.hex }}
-              ></div>
+              <div className="relative">
+                <div 
+                  className="w-16 h-16 rounded-full border-4 border-white shadow-lg"
+                  style={{ backgroundColor: detectedSkinTone.hex }}
+                ></div>
+                {detectedSkinTone.confidence && (
+                  <div className={`absolute -bottom-1 -right-1 px-2 py-1 rounded-full text-xs font-bold ${
+                    detectedSkinTone.confidence === 'high' ? 'bg-green-100 text-green-800' :
+                    detectedSkinTone.confidence === 'medium' ? 'bg-yellow-100 text-yellow-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {detectedSkinTone.confidence === 'high' ? '✓' : 
+                     detectedSkinTone.confidence === 'medium' ? '~' : '!'}
+                  </div>
+                )}
+              </div>
               <div className="flex-1">
                 <p className={`font-medium text-lg ${colors.text}`}>{detectedSkinTone.name}</p>
                 <p className={`text-sm ${colors.textMuted}`}>{detectedSkinTone.description}</p>
+                {detectedSkinTone.actualRGB && (
+                  <p className={`text-xs ${colors.textMuted} mt-1`}>
+                    Warna terdeteksi: RGB({detectedSkinTone.actualRGB.r}, {detectedSkinTone.actualRGB.g}, {detectedSkinTone.actualRGB.b})
+                  </p>
+                )}
               </div>
             </div>
             
